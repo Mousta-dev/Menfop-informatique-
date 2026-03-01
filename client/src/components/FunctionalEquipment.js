@@ -5,6 +5,7 @@ import api from '../api';
 const FunctionalEquipment = () => {
   const [equipment, setEquipment] = useState([]);
   const [establishments, setEstablishments] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -25,6 +26,11 @@ const FunctionalEquipment = () => {
       setError('Failed to fetch functional equipment.');
     }
   };
+
+  const filteredEquipment = equipment.filter((item) =>
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.establishment_name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const fetchEstablishments = async () => {
     try {
@@ -111,8 +117,17 @@ const FunctionalEquipment = () => {
         </Card.Body>
       </Card>
 
-      <h2>List of Functional Equipment</h2>
-      {equipment.length === 0 ? (
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h2>List of Functional Equipment</h2>
+        <Form.Control
+          type="text"
+          placeholder="Rechercher un équipement..."
+          style={{ width: '300px' }}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+      {filteredEquipment.length === 0 ? (
         <p>No functional equipment found.</p>
       ) : (
         <Table striped bordered hover>
@@ -124,7 +139,7 @@ const FunctionalEquipment = () => {
             </tr>
           </thead>
           <tbody>
-            {equipment.map((item) => (
+            {filteredEquipment.map((item) => (
               <tr key={item.id}>
                 <td>{item.id}</td>
                 <td>{item.name}</td>

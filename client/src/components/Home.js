@@ -3,6 +3,7 @@ import { Container, Row, Col, Card, Table, Alert } from 'react-bootstrap';
 import api from '../api';
 import { Pie, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
+import { Form } from 'react-bootstrap';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
@@ -10,6 +11,7 @@ ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarEle
 const Home = () => {
   const [summaryData, setSummaryData] = useState({ totalEquipment: 0, statusCounts: [] });
   const [equipmentByEstablishment, setEquipmentByEstablishment] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -29,6 +31,10 @@ const Home = () => {
       setError('Failed to load dashboard data.');
     }
   };
+
+  const filteredEquipmentByEstablishment = equipmentByEstablishment.filter((item) =>
+    item.establishment_name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Prepare data for Pie chart (Equipment by Status)
   const pieChartData = {
@@ -86,7 +92,16 @@ const Home = () => {
 
   return (
     <Container className="mt-4">
-      <h1>Dashboard Overview</h1>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h1>Dashboard Overview</h1>
+        <Form.Control
+          type="text"
+          placeholder="Rechercher un établissement..."
+          style={{ width: '300px' }}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
       {error && <Alert variant="danger">{error}</Alert>}
 
       <Row className="mb-4">
@@ -159,7 +174,7 @@ const Home = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {equipmentByEstablishment.map((item, index) => (
+                  {filteredEquipmentByEstablishment.map((item, index) => (
                     <tr key={index}>
                       <td>{item.establishment_name}</td>
                       <td>{item.equipmentCount}</td>

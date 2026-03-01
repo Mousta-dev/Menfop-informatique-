@@ -1,126 +1,150 @@
-body, #root, .App {
-  height: 100%;
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+:root {
+  --primary-violet: #8b5cf6;
+  --light-violet: #f5f3ff;
+  --soft-violet: #a78bfa;
+  --dark-violet: #6d28d9;
+  --bg-color: #f9fafb;
+  --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --transition: all 0.3s ease;
 }
 
 body {
-  background-color: #f8f9fa; /* Light background for natural theme */
-  color: #212529; /* Dark text for readability on light background */
-  position: relative;
+  background-color: var(--bg-color);
+  color: #1f2937;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
-
-/* Adjust Navbar for Liquid Glass effect */
+/* Elegant Navbar */
 .navbar {
-  background-color: rgba(255, 255, 255, 0.7) !important; /* Semi-transparent white background */
-  backdrop-filter: blur(10px); /* Frosted glass effect */
-  -webkit-backdrop-filter: blur(10px); /* For Safari */
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* Subtle bottom border */
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); /* Subtle shadow */
-  color: #212529 !important; /* Dark text for readability */
-  position: sticky; /* Keep navbar sticky at top */
-  top: 0;
-  z-index: 1000; /* Ensure it stays above other content */
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  padding: 1rem 0;
+  transition: var(--transition);
 }
 
-/* Ensure navbar links are dark and readable */
-.navbar .nav-link,
-.navbar .navbar-brand {
-  color: #212529 !important;
-}
-.navbar .nav-link:hover,
-.navbar .navbar-brand:hover {
-  color: #0056b3 !important; /* Darker blue on hover */
+.navbar-brand {
+  font-weight: 700;
+  color: var(--primary-violet) !important;
+  letter-spacing: -0.5px;
 }
 
-/* Adjust navbar toggler icon color for visibility */
-.navbar-toggler-icon {
-  filter: invert(0.5) sepia(1) saturate(5) hue-rotate(170deg) brightness(0.8); /* Darker icon color */
-}
-
-
-/* Ensure content containers have a solid light background */
-.container.mt-3 {
-  background-color: #ffffff; /* White background for main content area */
-  padding: 20px;
+.nav-link {
+  color: #4b5563 !important;
+  font-weight: 500;
+  margin: 0 0.5rem;
+  transition: var(--transition);
   border-radius: 8px;
-  min-height: calc(100vh - 56px - 2rem); /* Adjust based on navbar height and margin */
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); /* Subtle shadow */
 }
 
-/* Make cards a solid light background */
+.nav-link:hover {
+  color: var(--primary-violet) !important;
+  background-color: var(--light-violet);
+}
+
+/* Container Styling */
+.container.mt-3 {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  padding-top: 2rem;
+}
+
+/* Divi-style Cards */
 .card {
-  background-color: #ffffff !important; /* Solid white background for cards */
-  border-color: #ced4da !important; /* Subtle light gray border */
+  border: none !important;
+  border-radius: 20px !important;
+  box-shadow: var(--card-shadow);
+  transition: var(--transition);
+  overflow: hidden;
+  background: #ffffff !important;
+  margin-bottom: 2rem;
 }
 
-/* Text color adjustments for various elements */
-h1, h2, h3, h4, h5, h6, .card-title, .form-label {
-  color: #212529; /* Dark text */
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-/* Make tables light theme friendly */
+.card-header {
+  background-color: var(--light-violet) !important;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1) !important;
+  color: var(--dark-violet) !important;
+  font-weight: 600;
+  padding: 1.25rem;
+}
+
+/* Modern Buttons */
+.btn-primary {
+  background-color: var(--primary-violet) !important;
+  border: none !important;
+  border-radius: 50px !important;
+  padding: 0.6rem 1.5rem !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.3) !important;
+  transition: var(--transition) !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--dark-violet) !important;
+  transform: scale(1.02);
+  box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.4) !important;
+}
+
+.btn-outline-light {
+  border-radius: 50px !important;
+  border: 2px solid var(--primary-violet) !important;
+  color: var(--primary-violet) !important;
+}
+
+.btn-outline-light:hover {
+  background-color: var(--primary-violet) !important;
+  color: white !important;
+}
+
+/* Form Controls */
+.form-control, .form-select {
+  border-radius: 12px !important;
+  border: 1px solid #e5e7eb !important;
+  padding: 0.75rem 1rem !important;
+  transition: var(--transition);
+}
+
+.form-control:focus {
+  border-color: var(--soft-violet) !important;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1) !important;
+}
+
+/* Tables */
 .table {
-  background-color: #ffffff; /* Solid white background for tables */
-  color: #212529; /* Dark text for tables */
-}
-
-.table th,
-.table td {
-  background-color: #ffffff !important; /* Ensure table cells are white */
-  border-color: #dee2e6 !important; /* Lighter border for contrast */
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .table thead th {
-  color: #212529; /* Ensure table headers are dark */
+  background-color: var(--light-violet) !important;
+  color: var(--dark-violet) !important;
+  border: none !important;
+  padding: 1rem !important;
 }
 
-.table-striped > tbody > tr:nth-of-type(odd) > * {
-  background-color: #f2f2f2 !important; /* Slightly different light background for odd rows */
+.table td {
+  padding: 1rem !important;
+  vertical-align: middle !important;
 }
 
-.table-hover > tbody > tr:hover > * {
-  background-color: #e2e6ea !important; /* Lighter hover effect */
+/* Titles */
+h1, h2, h3 {
+  color: #111827;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
 }
 
-/* Make Modal backgrounds solid light */
-.modal-content {
-  background-color: #ffffff !important; /* Solid white background for modal content */
-  color: #212529; /* Dark text */
-  border-color: #ced4da !important;
-}
-
-.modal-header,
-.modal-body,
-.modal-footer {
-  background-color: #ffffff !important; /* Ensure modal internal parts are light */
-  border-color: #ced4da !important; /* Subtle border */
-}
-
-/* Make form controls solid light */
-.form-control,
-.form-select {
-  background-color: #ffffff !important; /* White background for input fields */
-  color: #212529 !important; /* Dark text for input */
-  border-color: #ced4da !important; /* Light gray border */
-}
-
-.form-control::placeholder { /* Adjust placeholder color */
-  color: #6c757d !important; /* Muted dark gray placeholder */
-}
-
-.form-control:focus,
-.form-select:focus {
-  background-color: #ffffff !important; /* White on focus */
-  border-color: #80bdff !important; /* Bootstrap blue focus border */
-  box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25) !important; /* Bootstrap blue glow on focus */
+/* Custom violet badge/accent */
+.accent-violet {
+  color: var(--primary-violet);
+  font-weight: 600;
 }

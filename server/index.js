@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 const authenticateToken = (req, res, next) => {
@@ -23,6 +23,17 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+const authorizeRole = (role) => {
+    return (req, res, next) => {
+        if (req.user && req.user.role === role) {
+            next();
+        } else {
+            console.log(`Accès refusé pour ${req.user ? req.user.username : 'inconnu'}. Rôle requis: ${role}, Rôle actuel: ${req.user ? req.user.role : 'aucun'}`);
+            res.status(403).json({ error: "Accès refusé : Droits insuffisants (Rôle " + role + " requis)" });
+        }
+    };
+};
+
 const db = new sqlite3.Database('./management.db', sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
     if (err) {
         console.error('Error connecting to database:', err.message);
@@ -32,20 +43,31 @@ const db = new sqlite3.Database('./management.db', sqlite3.OPEN_READWRITE | sqli
             db.run(`CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT NOT NULL UNIQUE,
-                password TEXT NOT NULL
+                password TEXT NOT NULL,
+                role TEXT DEFAULT 'utilisateur'
             )`, (err) => {
                 if (err) {
                     console.error('Error creating users table:', err.message);
                 } else {
-                    // Seed the database with a default user
-                    const insert = 'INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)';
-                    bcrypt.hash('Mousta@2025', 10, (err, hash) => {
-                        if (err) {
-                            console.error('Error hashing password:', err);
+                    // Check if role column exists and add if missing (migration)
+                    db.run(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'utilisateur'`, (err) => {
+                        if (err && !err.message.includes('duplicate column name')) {
+                            console.error('Error adding role column:', err.message);
                         }
-                        else {
-                            db.run(insert, ['Alpha', hash]);
-                        }
+
+                        const insertAdmin = 'INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)';
+                        bcrypt.hash('Mousta@2025', 10, (err, hash) => {
+                            if (err) {
+                                console.error('Error hashing password for admin:', err);
+                            } else {
+                                db.run(insertAdmin, ['Alpha', hash, 'administrateur'], (err) => {
+                                    if (!err) {
+                                        // Ensure existing Alpha is admin and has ID 1 if possible
+                                        db.run('UPDATE users SET role = "administrateur" WHERE username = "Alpha"');
+                                    }
+                                });
+                            }
+                        });
                     });
                 }
             });
@@ -99,8 +121,12 @@ app.post('/login', (req, res) => {
                 return res.status(500).json({ error: err.message });
             }
             if (result) {
-                const token = jwt.sign({ username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
-                res.json({ success: true, token });
+                const token = jwt.sign(
+                    { id: user.id, username: user.username, role: user.role },
+                    process.env.JWT_SECRET,
+                    { expiresIn: '1h' }
+                );
+                res.json({ success: true, token, role: user.role });
             } else {
                 res.json({ success: false, message: 'Invalid credentials' });
             }
@@ -159,7 +185,7 @@ app.put('/api/establishments/:id', authenticateToken, (req, res) => {
     });
 });
 
-app.delete('/api/establishments/:id', authenticateToken, (req, res) => {
+app.delete('/api/establishments/:id', authenticateToken, authorizeRole('administrateur'), (req, res) => {
     const { id } = req.params;
     db.run('DELETE FROM establishments WHERE id = ?', id, function(err) {
         if (err) {
@@ -281,7 +307,7 @@ app.put('/api/equipment/:id', authenticateToken, (req, res) => {
     });
 });
 
-app.delete('/api/equipment/:id', authenticateToken, (req, res) => {
+app.delete('/api/equipment/:id', authenticateToken, authorizeRole('administrateur'), (req, res) => {
     const { id } = req.params;
     db.run('DELETE FROM equipment WHERE id = ?', id, function(err) {
         if (err) {
@@ -389,6 +415,24 @@ app.get('/api/missions/summary', authenticateToken, (req, res) => {
     });
 });
 
+app.get('/api/missions/:id', authenticateToken, (req, res) => {
+    const { id } = req.params;
+    db.get('SELECT * FROM missions WHERE id = ?', [id], (err, row) => {
+        if (err) {
+            res.status(400).json({ "error": err.message });
+            return;
+        }
+        if (!row) {
+            res.status(404).json({ "error": "Mission not found" });
+            return;
+        }
+        res.json({
+            "message": "success",
+            "data": row
+        });
+    });
+});
+
 app.get('/api/dashboard/summary', authenticateToken, (req, res) => {
     db.get('SELECT COUNT(*) as totalEquipment FROM equipment', (err, total) => {
         if (err) {
@@ -421,6 +465,87 @@ app.get('/api/dashboard/equipment-by-establishment', authenticateToken, (req, re
             "message": "success",
             "data": rows
         });
+    });
+});
+
+app.post('/api/users', authenticateToken, authorizeRole('administrateur'), (req, res) => {
+    const { username, password, role } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ error: "Le nom d'utilisateur et le mot de passe sont requis." });
+    }
+    bcrypt.hash(password, 10, (err, hash) => {
+        if (err) return res.status(500).json({ error: "Erreur technique (hachage)." });
+        db.run('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [username, hash, role || 'utilisateur'], function(err) {
+            if (err) {
+                if (err.message.includes('UNIQUE')) return res.status(400).json({ error: "Ce nom d'utilisateur existe déjà." });
+                return res.status(400).json({ error: err.message });
+            }
+            res.status(201).json({ message: "Utilisateur créé avec succès", id: this.lastID });
+        });
+    });
+});
+
+app.get('/api/users', authenticateToken, authorizeRole('administrateur'), (req, res) => {
+    db.all('SELECT id, username, role FROM users', [], (err, rows) => {
+        if (err) return res.status(400).json({ error: err.message });
+        res.json({ data: rows });
+    });
+});
+
+app.put('/api/users/:id', authenticateToken, authorizeRole('administrateur'), (req, res) => {
+    const { username, role, password } = req.body;
+    const { id } = req.params;
+
+    console.log(`Modification de l'utilisateur ID: ${id} par l'admin: ${req.user.username}`);
+
+    if (password && password.trim() !== "") {
+        bcrypt.hash(password, 10, (err, hash) => {
+            if (err) return res.status(500).json({ error: "Erreur de hachage" });
+            db.run('UPDATE users SET username = ?, role = ?, password = ? WHERE id = ?', [username, role, hash, id], function(err) {
+                if (err) return res.status(400).json({ error: err.message });
+                res.json({ message: "Utilisateur mis à jour avec nouveau mot de passe" });
+            });
+        });
+    } else {
+        db.run('UPDATE users SET username = ?, role = ? WHERE id = ?', [username, role, id], function(err) {
+            if (err) return res.status(400).json({ error: err.message });
+            res.json({ message: "Utilisateur mis à jour" });
+        });
+    }
+});
+
+app.delete('/api/users/:id', authenticateToken, authorizeRole('administrateur'), (req, res) => {
+    const { id } = req.params;
+    
+    // Si req.user.id est manquant dans le token, on se base sur le nom pour la protection
+    const isSelf = (req.user.id && String(req.user.id) === String(id)) || (req.user.username === 'Alpha' && id == '1');
+
+    if (isSelf) {
+        return res.status(400).json({ error: "Protection : Vous ne pouvez pas supprimer le compte administrateur principal." });
+    }
+
+    db.run('DELETE FROM users WHERE id = ?', id, function(err) {
+        if (err) return res.status(500).json({ error: "Erreur lors de la suppression en base." });
+        if (this.changes === 0) return res.status(404).json({ error: "Utilisateur non trouvé." });
+        res.json({ message: "Utilisateur supprimé avec succès." });
+    });
+});
+
+// Fallback routes if prefix is missing
+app.get('/users', authenticateToken, authorizeRole('administrateur'), (req, res) => {
+    db.all('SELECT id, username, role FROM users', [], (err, rows) => {
+        if (err) return res.status(400).json({ error: err.message });
+        res.json({ data: rows });
+    });
+});
+
+app.delete('/users/:id', authenticateToken, authorizeRole('administrateur'), (req, res) => {
+    const { id } = req.params;
+    const isSelf = (req.user.id && String(req.user.id) === String(id)) || (req.user.username === 'Alpha' && id == '1');
+    if (isSelf) return res.status(400).json({ error: "Interdit." });
+    db.run('DELETE FROM users WHERE id = ?', id, function(err) {
+        if (err) return res.status(500).json({ error: "Erreur." });
+        res.json({ message: "Supprimé." });
     });
 });
 

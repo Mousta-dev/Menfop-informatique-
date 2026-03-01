@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, Form, Alert, Modal } from 'react-bootstrap';
 import api from '../api';
 
-const ManageEquipment = () => {
+const ManageEquipment = ({ userRole }) => {
   const [equipment, setEquipment] = useState([]);
   const [establishments, setEstablishments] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -28,6 +29,12 @@ const ManageEquipment = () => {
       setError('Failed to fetch equipment.');
     }
   };
+
+  const filteredEquipment = equipment.filter((item) =>
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.establishment_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.status.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const fetchEstablishments = async () => {
     try {
@@ -96,13 +103,22 @@ const ManageEquipment = () => {
 
   return (
     <div>
-      <h1>Manage All Equipment</h1>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h1>Manage All Equipment</h1>
+        <Form.Control
+          type="text"
+          placeholder="Rechercher un équipement..."
+          style={{ width: '300px' }}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
 
       {error && <Alert variant="danger">{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
 
-      {equipment.length === 0 ? (
-        <p>No equipment found. Add some using "Nouveau Materiel".</p>
+      {filteredEquipment.length === 0 ? (
+        <p>No equipment found.</p>
       ) : (
         <Table striped bordered hover>
           <thead>
@@ -115,7 +131,7 @@ const ManageEquipment = () => {
             </tr>
           </thead>
           <tbody>
-            {equipment.map((item) => (
+            {filteredEquipment.map((item) => (
               <tr key={item.id}>
                 <td>{item.id}</td>
                 <td>{item.name}</td>
@@ -123,7 +139,9 @@ const ManageEquipment = () => {
                 <td>{item.establishment_name}</td>
                 <td>
                   <Button variant="warning" size="sm" className="me-2" onClick={() => handleEdit(item)}>Edit</Button>
-                  <Button variant="danger" size="sm" onClick={() => handleDelete(item.id)}>Delete</Button>
+                  {userRole === 'administrateur' && (
+                    <Button variant="danger" size="sm" onClick={() => handleDelete(item.id)}>Delete</Button>
+                  )}
                 </td>
               </tr>
             ))}

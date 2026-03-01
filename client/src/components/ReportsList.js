@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Alert, Button } from 'react-bootstrap';
+import { Card, Table, Alert, Button, Form } from 'react-bootstrap';
 import api from '../api';
 import { Link } from 'react-router-dom';
 
 const ReportsList = () => {
   const [reports, setReports] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -21,13 +22,27 @@ const ReportsList = () => {
     }
   };
 
+  const filteredReports = reports.filter((report) =>
+    report.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    report.id.toString().includes(searchTerm)
+  );
+
   return (
     <div>
-      <h1>Liste des Rapports</h1>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h1>Liste des Rapports</h1>
+        <Form.Control
+          type="text"
+          placeholder="Rechercher un rapport..."
+          style={{ width: '300px' }}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
       {error && <Alert variant="danger">{error}</Alert>}
 
-      {reports.length === 0 ? (
-        <Alert variant="info">Aucun rapport trouvé. Créez un nouveau rapport dans la section "Rapport".</Alert>
+      {filteredReports.length === 0 ? (
+        <Alert variant="info">Aucun rapport trouvé.</Alert>
       ) : (
         <Card>
           <Card.Body>
@@ -41,7 +56,7 @@ const ReportsList = () => {
                 </tr>
               </thead>
               <tbody>
-                {reports.map((report) => (
+                {filteredReports.map((report) => (
                   <tr key={report.id}>
                     <td>{report.id}</td>
                     <td>{report.content.substring(0, 100)}...</td> {/* Show first 100 chars */}

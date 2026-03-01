@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Card, Table, Alert, Button } from 'react-bootstrap';
 import { missionsApi } from '../api'; // Use the new missionsApi
 import { Link } from 'react-router-dom';
+import { Form } from 'react-bootstrap';
 
 const MissionsList = () => {
   const [missions, setMissions] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -21,13 +23,28 @@ const MissionsList = () => {
     }
   };
 
+  const filteredMissions = missions.filter((mission) =>
+    mission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (mission.description && mission.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    mission.status.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div>
-      <h1>Liste des Missions</h1>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h1>Liste des Missions</h1>
+        <Form.Control
+          type="text"
+          placeholder="Rechercher une mission..."
+          style={{ width: '300px' }}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
       {error && <Alert variant="danger">{error}</Alert>}
 
-      {missions.length === 0 ? (
-        <Alert variant="info">Aucune mission trouvée. Créez une nouvelle mission.</Alert>
+      {filteredMissions.length === 0 ? (
+        <Alert variant="info">Aucune mission trouvée.</Alert>
       ) : (
         <Card>
           <Card.Body>
@@ -43,7 +60,7 @@ const MissionsList = () => {
                 </tr>
               </thead>
               <tbody>
-                {missions.map((mission) => (
+                {filteredMissions.map((mission) => (
                   <tr key={mission.id}>
                     <td>{mission.id}</td>
                     <td>{mission.name}</td>

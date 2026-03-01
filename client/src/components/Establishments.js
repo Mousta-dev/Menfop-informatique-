@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, Form, Alert, Modal } from 'react-bootstrap';
 import api from '../api';
 
-const Establishments = () => {
+const Establishments = ({ userRole }) => {
   const [establishments, setEstablishments] = useState([]);
   const [newEstablishmentName, setNewEstablishmentName] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -26,6 +27,10 @@ const Establishments = () => {
     }
   };
 
+  const filteredEstablishments = establishments.filter((e) =>
+    e.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const handleAddEstablishment = async (e) => {
     e.preventDefault();
     setError('');
@@ -36,12 +41,13 @@ const Establishments = () => {
     }
     try {
       await api.post('/establishments', { name: newEstablishmentName });
-      setSuccess('Establishment added successfully!');
+      setSuccess('Établissement ajouté avec succès !');
       setNewEstablishmentName('');
       fetchEstablishments(); // Refresh the list
     } catch (err) {
       console.error('Error adding establishment:', err);
-      setError('Failed to add establishment. It might already exist or there was a server error.');
+      const serverError = err.response?.data?.error || err.response?.data?.message;
+      setError(`Échec de l'ajout : ${serverError || err.message}`);
     }
   };
 
@@ -51,16 +57,18 @@ const Establishments = () => {
     if (window.confirm('Are you sure you want to delete this establishment?')) {
       try {
         await api.delete(`/establishments/${id}`);
-        setSuccess('Establishment deleted successfully!');
+        setSuccess('Établissement supprimé avec succès !');
         fetchEstablishments(); // Refresh the list
       } catch (err) {
         console.error('Error deleting establishment:', err);
-        setError('Failed to delete establishment. It might have associated equipment.');
+        const serverError = err.response?.data?.error || err.response?.data?.message;
+        setError(`Échec de la suppression : ${serverError || err.message}`);
       }
     }
   };
 
   const handleEdit = (establishment) => {
+    console.log('Editing establishment:', establishment);
     setCurrentEstablishment(establishment);
     setEditedEstablishmentName(establishment.name);
     setShowEditModal(true);
@@ -81,14 +89,25 @@ const Establishments = () => {
       setError('Establishment name cannot be empty.');
       return;
     }
+    
+    if (!currentEstablishment || !currentEstablishment.id) {
+      setError('Erreur interne : Établissement non sélectionné.');
+      return;
+    }
+
     try {
-      await api.put(`/establishments/${currentEstablishment.id}`, { name: editedEstablishmentName });
-      setSuccess('Establishment updated successfully!');
+      const url = `/establishments/${currentEstablishment.id}`;
+      console.log(`Updating establishment at ${url} with name: ${editedEstablishmentName}`);
+      const response = await api.put(url, { name: editedEstablishmentName });
+      console.log('Update response:', response.data);
+      
+      setSuccess('Établissement mis à jour avec succès !');
       handleCloseEditModal();
       fetchEstablishments(); // Refresh the list
     } catch (err) {
       console.error('Error updating establishment:', err);
-      setError('Failed to update establishment. It might already exist or there was a server error.');
+      const serverError = err.response?.data?.error || err.response?.data?.message;
+      setError(`Échec de la mise à jour : ${serverError || err.message}`);
     }
   };
 
@@ -114,9 +133,18 @@ const Establishments = () => {
         </Button>
       </Form>
 
-      <h2>Current Establishments</h2>
-      {establishments.length === 0 ? (
-        <p>No establishments found. Add some above!</p>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h2>Current Establishments</h2>
+        <Form.Control
+          type="text"
+          placeholder="Rechercher un établissement..."
+          style={{ width: '300px' }}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+      {filteredEstablishments.length === 0 ? (
+        <p>No establishments found.</p>
       ) : (
         <Table striped bordered hover>
           <thead>
@@ -127,13 +155,15 @@ const Establishments = () => {
             </tr>
           </thead>
           <tbody>
-            {establishments.map((establishment) => (
+            {filteredEstablishments.map((establishment) => (
               <tr key={establishment.id}>
                 <td>{establishment.id}</td>
                 <td>{establishment.name}</td>
                 <td>
                   <Button variant="warning" size="sm" className="me-2" onClick={() => handleEdit(establishment)}>Edit</Button>
-                  <Button variant="danger" size="sm" onClick={() => handleDelete(establishment.id)}>Delete</Button>
+                  {userRole === 'administrateur' && (
+                    <Button variant="danger" size="sm" onClick={() => handleDelete(establishment.id)}>Delete</Button>
+                  )}
                 </td>
               </tr>
             ))}

@@ -2,7 +2,7 @@ import axios from 'axios';
 
 
 const api = axios.create({
-  baseURL: 'http://localhost:3001/api',
+  baseURL: `http://${window.location.hostname}:3001/api`,
 });
 
 api.interceptors.request.use(
@@ -20,6 +20,7 @@ api.interceptors.request.use(
 
 const missionsApi = {
   getMissions: () => api.get('/missions'),
+  getMission: (id) => api.get(`/missions/${id}`),
   createMission: (missionData) => api.post('/missions', missionData),
   getMissionsSummary: () => api.get('/missions/summary'),
 };
