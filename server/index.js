@@ -92,34 +92,25 @@ const authorizeRole = (role) => {
 
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
-    console.log(`Tentative de connexion pour l'utilisateur: ${username}`);
     try {
         let user;
         if (usePostgres) {
-            console.log('Recherche dans Postgres...');
             const result = await sql`SELECT * FROM users WHERE username = ${username}`;
             user = result.rows[0];
         } else {
-            console.log('Recherche dans SQLite...');
             user = await new Promise((res, rej) => dbSQLite.get('SELECT * FROM users WHERE username = ?', [username], (err, r) => err ? rej(err) : res(r)));
         }
 
-        if (!user) {
-            console.log('Utilisateur non trouvé');
-            return res.json({ success: false, message: 'Identifiants invalides' });
-        }
+        if (!user) return res.json({ success: false, message: 'Identifiants invalides' });
         
         const valid = await bcrypt.compare(password, user.password);
         if (valid) {
-            console.log('Connexion réussie !');
             const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '1h' });
             res.json({ success: true, token, role: user.role });
         } else {
-            console.log('Mot de passe incorrect');
             res.json({ success: false, message: 'Identifiants invalides' });
         }
     } catch (err) {
-        console.error('Erreur lors du login:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -235,7 +226,10 @@ app.get('/api/dashboard/summary', authenticateToken, async (req, res) => {
         if (usePostgres) {
             const total = (await sql`SELECT COUNT(*) as count FROM equipment`).rows[0].count;
             const statusCounts = (await sql`SELECT status, COUNT(*) as count FROM equipment GROUP BY status`).rows;
-            res.json({ message: "success", data: { totalEquipment: parseInt(total), statusCounts } });
+            res.json({ message: "success", data: { 
+                totalEquipment: parseInt(total) || 0, 
+                statusCounts: statusCounts.map(s => ({ ...s, count: parseInt(s.count) }))
+            } });
         } else {
             dbSQLite.get('SELECT COUNT(*) as totalEquipment FROM equipment', (err, total) => {
                 dbSQLite.all('SELECT status, COUNT(*) as count FROM equipment GROUP BY status', [], (err, statusCounts) => {
@@ -243,6 +237,19 @@ app.get('/api/dashboard/summary', authenticateToken, async (req, res) => {
                 });
             });
         }
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.get('/api/dashboard/equipment-by-establishment', authenticateToken, async (req, res) => {
+    try {
+        let rows;
+        if (usePostgres) {
+            rows = (await sql`SELECT e.name as establishment_name, COUNT(eq.id) as equipmentcount FROM establishments e LEFT JOIN equipment eq ON e.id = eq.establishment_id GROUP BY e.name ORDER BY e.name`).rows;
+            rows = rows.map(r => ({ establishment_name: r.establishment_name, equipmentCount: parseInt(r.equipmentcount) }));
+        } else {
+            rows = await new Promise((res, rej) => dbSQLite.all('SELECT e.name as establishment_name, COUNT(eq.id) as equipmentCount FROM establishments e LEFT JOIN equipment eq ON e.id = eq.establishment_id GROUP BY e.name ORDER BY e.name', [], (err, r) => err ? rej(err) : res(r)));
+        }
+        res.json({ message: "success", data: rows });
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
