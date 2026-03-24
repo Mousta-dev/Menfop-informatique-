@@ -47,7 +47,15 @@ i18n
             error: 'Erreur',
             success: 'Succès',
             error_login_invalid: 'Identifiants invalides',
-            error_login_failed: 'Erreur lors de la connexion'
+            error_login_failed: 'Erreur lors de la connexion',
+            functional: 'Fonctionnel',
+            damaged: 'Endommagé',
+            new: 'Nouveau',
+            confirm_delete: 'Êtes-vous sûr de vouloir supprimer ceci ?',
+            success_delete: 'Supprimé avec succès !',
+            success_update: 'Mis à jour avec succès !',
+            error_fetch_equipment: 'Échec de la récupération des équipements.',
+            error_fetch_establishments: 'Échec de la récupération des établissements.'
           }
         }
       },
@@ -86,7 +94,15 @@ i18n
             error: 'Error',
             success: 'Success',
             error_login_invalid: 'Invalid credentials',
-            error_login_failed: 'Error during login'
+            error_login_failed: 'Error during login',
+            functional: 'Functional',
+            damaged: 'Damaged',
+            new: 'New',
+            confirm_delete: 'Are you sure you want to delete this?',
+            success_delete: 'Deleted successfully!',
+            success_update: 'Updated successfully!',
+            error_fetch_equipment: 'Failed to fetch equipment.',
+            error_fetch_establishments: 'Failed to fetch establishments.'
           }
         }
       }

@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Button, Form, Alert, Modal } from 'react-bootstrap';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Table, Button, Form, Alert, Modal, Card, Row, Col, Badge, InputGroup } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import api from '../api';
 
 const ManageEquipment = ({ userRole }) => {
+  const { t } = useTranslation();
   const [equipment, setEquipment] = useState([]);
   const [establishments, setEstablishments] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [establishmentFilter, setEstablishmentFilter] = useState('all');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -15,48 +19,61 @@ const ManageEquipment = ({ userRole }) => {
   const [editedStatus, setEditedStatus] = useState('');
   const [editedEstablishmentId, setEditedEstablishmentId] = useState('');
 
-  useEffect(() => {
-    fetchEquipment();
-    fetchEstablishments();
-  }, []);
-
-  const fetchEquipment = async () => {
+  const fetchEquipment = useCallback(async () => {
     try {
       const response = await api.get('/equipment');
       setEquipment(response.data.data);
     } catch (err) {
       console.error('Error fetching equipment:', err);
-      setError('Failed to fetch equipment.');
+      setError(t('common.error_fetch_equipment') || 'Failed to fetch equipment.');
     }
-  };
+  }, [t]);
 
-  const filteredEquipment = equipment.filter((item) =>
-    (item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase().trim())) ||
-    (item.establishment_name && item.establishment_name.toLowerCase().includes(searchTerm.toLowerCase().trim())) ||
-    (item.status && item.status.toLowerCase().includes(searchTerm.toLowerCase().trim()))
-  );
-
-  const fetchEstablishments = async () => {
+  const fetchEstablishments = useCallback(async () => {
     try {
       const response = await api.get('/establishments');
       setEstablishments(response.data.data);
     } catch (err) {
       console.error('Error fetching establishments:', err);
-      setError('Failed to load establishments for editing.');
+      setError(t('common.error_fetch_establishments') || 'Failed to load establishments.');
     }
-  };
+  }, [t]);
+
+  useEffect(() => {
+    fetchEquipment();
+    fetchEstablishments();
+  }, [fetchEquipment, fetchEstablishments]);
+
+  // Statistics
+  const stats = useMemo(() => {
+    return {
+      total: equipment.length,
+      functional: equipment.filter(e => e.status === 'functional').length,
+      damaged: equipment.filter(e => e.status === 'damaged').length,
+      new: equipment.filter(e => e.status === 'new').length
+    };
+  }, [equipment]);
+
+  const filteredEquipment = equipment.filter((item) => {
+    const matchesSearch = 
+      (item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase().trim())) ||
+      (item.establishment_name && item.establishment_name.toLowerCase().includes(searchTerm.toLowerCase().trim()));
+    
+    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+    const matchesEstablishment = establishmentFilter === 'all' || item.establishment_id.toString() === establishmentFilter;
+
+    return matchesSearch && matchesStatus && matchesEstablishment;
+  });
 
   const handleDelete = async (id) => {
-    setError('');
-    setSuccess('');
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet équipement ?')) {
+    if (window.confirm(t('common.confirm_delete') || 'Are you sure you want to delete this?')) {
       try {
         await api.delete(`/equipment/${id}`);
-        setSuccess('Équipement supprimé avec succès !');
-        fetchEquipment(); // Refresh the list
+        setSuccess(t('common.success_delete') || 'Deleted successfully!');
+        fetchEquipment();
       } catch (err) {
         console.error('Error deleting equipment:', err);
-        setError('Échec de la suppression de l\'équipement.');
+        setError(t('common.error_delete') || 'Failed to delete.');
       }
     }
   };
@@ -72,113 +89,196 @@ const ManageEquipment = ({ userRole }) => {
   const handleCloseEditModal = () => {
     setShowEditModal(false);
     setCurrentEquipment(null);
-    setEditedName('');
-    setEditedStatus('');
-    setEditedEstablishmentId('');
-    setError(''); // Clear error on close
   };
 
   const handleSaveEdit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
-    if (!editedName.trim() || !editedStatus || !editedEstablishmentId) {
-      setError('Tous les champs sont requis.');
-      return;
-    }
     try {
       await api.put(`/equipment/${currentEquipment.id}`, {
         name: editedName,
         status: editedStatus,
         establishment_id: editedEstablishmentId,
       });
-      setSuccess('Équipement mis à jour avec succès !');
+      setSuccess(t('common.success_update') || 'Updated successfully!');
       handleCloseEditModal();
-      fetchEquipment(); // Refresh the list
+      fetchEquipment();
     } catch (err) {
       console.error('Error updating equipment:', err);
-      setError('Échec de la mise à jour de l\'équipement.');
+      setError(t('common.error_update') || 'Failed to update.');
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'functional': return <Badge bg="success">{t('common.functional') || 'Fonctionnel'}</Badge>;
+      case 'damaged': return <Badge bg="danger">{t('common.damaged') || 'Endommagé'}</Badge>;
+      case 'new': return <Badge bg="info">{t('common.new') || 'Nouveau'}</Badge>;
+      default: return <Badge bg="secondary">{status}</Badge>;
     }
   };
 
   return (
-    <div>
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
-        <h1 className="mb-3 mb-md-0">Gérer tous les équipements</h1>
-        <div className="d-flex gap-2 w-100 w-md-auto" style={{ maxWidth: '400px' }}>
-            <Form.Control
-            type="text"
-            placeholder="Rechercher un équipement..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-                <Button variant="outline-secondary" onClick={() => setSearchTerm('')}>
-                    Effacer
-                </Button>
-            )}
-        </div>
-      </div>
+    <div className="py-2">
+      <h1 className="mb-4">{t('sidebar.manage_equipment')}</h1>
 
-      {error && <Alert variant="danger">{error}</Alert>}
-      {success && <Alert variant="success">{success}</Alert>}
+      {/* Stats Overview */}
+      <Row className="mb-4 g-3">
+        <Col md={3}>
+          <Card className="text-center border-0 shadow-sm h-100">
+            <Card.Body className="py-3">
+              <div className="text-muted small mb-1 uppercase font-weight-bold">Total</div>
+              <h3 className="mb-0 text-primary">{stats.total}</h3>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={3}>
+          <Card className="text-center border-0 shadow-sm h-100">
+            <Card.Body className="py-3">
+              <div className="text-muted small mb-1">Fonctionnel</div>
+              <h3 className="mb-0 text-success">{stats.functional}</h3>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={3}>
+          <Card className="text-center border-0 shadow-sm h-100">
+            <Card.Body className="py-3">
+              <div className="text-muted small mb-1">Endommagé</div>
+              <h3 className="mb-0 text-danger">{stats.damaged}</h3>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={3}>
+          <Card className="text-center border-0 shadow-sm h-100">
+            <Card.Body className="py-3">
+              <div className="text-muted small mb-1">Nouveau</div>
+              <h3 className="mb-0 text-info">{stats.new}</h3>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
-      {filteredEquipment.length === 0 ? (
-        <p>Aucun équipement trouvé.</p>
-      ) : (
+      {error && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
+      {success && <Alert variant="success" onClose={() => setSuccess('')} dismissible>{success}</Alert>}
+
+      {/* Filters Bar */}
+      <Card className="mb-4 border-0 shadow-sm">
+        <Card.Body className="p-3">
+          <Row className="g-3">
+            <Col lg={4}>
+              <InputGroup size="sm">
+                <Form.Control
+                  placeholder={t('common.search')}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && (
+                  <Button variant="outline-secondary" onClick={() => setSearchTerm('')}>
+                    ×
+                  </Button>
+                )}
+              </InputGroup>
+            </Col>
+            <Col md={6} lg={4}>
+              <Form.Select size="sm" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                <option value="all">Tous les statuts</option>
+                <option value="functional">Fonctionnel</option>
+                <option value="damaged">Endommagé</option>
+                <option value="new">Nouveau</option>
+              </Form.Select>
+            </Col>
+            <Col md={6} lg={4}>
+              <Form.Select size="sm" value={establishmentFilter} onChange={(e) => setEstablishmentFilter(e.target.value)}>
+                <option value="all">Tous les établissements</option>
+                {establishments.map(e => (
+                  <option key={e.id} value={e.id}>{e.name}</option>
+                ))}
+              </Form.Select>
+            </Col>
+          </Row>
+        </Card.Body>
+      </Card>
+
+      {/* Main Table */}
+      <Card className="border-0 shadow-sm">
         <div className="table-responsive">
-          <Table striped bordered hover>
-            <thead>
+          <Table hover className="align-middle mb-0">
+            <thead className="bg-light">
               <tr>
-                <th>ID</th>
-                <th>Nom</th>
-                <th>Statut</th>
-                <th>Établissement</th>
-                <th>Actions</th>
+                <th className="px-4 py-3 text-muted" style={{ width: '80px' }}>ID</th>
+                <th className="py-3 text-muted">{t('common.name')}</th>
+                <th className="py-3 text-muted">{t('common.status')}</th>
+                <th className="py-3 text-muted">Établissement</th>
+                <th className="px-4 py-3 text-muted text-end">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
-              {filteredEquipment.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.id}</td>
-                  <td>{item.name}</td>
-                  <td>{item.status}</td>
-                  <td>{item.establishment_name}</td>
-                  <td className="text-nowrap">
-                    <Button variant="warning" size="sm" className="me-2" onClick={() => handleEdit(item)}>Modifier</Button>
-                    {userRole === 'administrateur' && (
-                      <Button variant="danger" size="sm" onClick={() => handleDelete(item.id)}>Supprimer</Button>
-                    )}
+              {filteredEquipment.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="text-center py-5 text-muted">
+                    Aucun équipement trouvé.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredEquipment.map((item) => (
+                  <tr key={item.id}>
+                    <td className="px-4 text-muted small">#{item.id}</td>
+                    <td className="fw-bold">{item.name}</td>
+                    <td>{getStatusBadge(item.status)}</td>
+                    <td>
+                        <span className="text-muted small">
+                            {item.establishment_name}
+                        </span>
+                    </td>
+                    <td className="px-4 text-end">
+                      <Button 
+                        variant="warning" 
+                        size="sm" 
+                        className="me-2" 
+                        onClick={() => handleEdit(item)}
+                      >
+                        {t('common.edit')}
+                      </Button>
+                      {userRole === 'administrateur' && (
+                        <Button 
+                          variant="danger" 
+                          size="sm" 
+                          onClick={() => handleDelete(item.id)}
+                        >
+                          {t('common.delete')}
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </Table>
         </div>
-      )}
+      </Card>
 
-      {/* Edit Equipment Modal */}
-      <Modal show={showEditModal} onHide={handleCloseEditModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>Modifier l'équipement</Modal.Title>
+      {/* Edit Modal */}
+      <Modal show={showEditModal} onHide={handleCloseEditModal} centered>
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title className="h5 fw-bold">{t('common.edit')}</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          {error && <Alert variant="danger">{error}</Alert>}
+        <Modal.Body className="pt-3">
           <Form onSubmit={handleSaveEdit}>
             <Form.Group className="mb-3">
-              <Form.Label>Nom de l'équipement</Form.Label>
+              <Form.Label className="small fw-bold">{t('common.name')}</Form.Label>
               <Form.Control
                 type="text"
                 value={editedName}
                 onChange={(e) => setEditedName(e.target.value)}
+                required
               />
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Statut</Form.Label>
+              <Form.Label className="small fw-bold">{t('common.status')}</Form.Label>
               <Form.Select
                 value={editedStatus}
                 onChange={(e) => setEditedStatus(e.target.value)}
+                required
               >
                 <option value="new">Nouveau</option>
                 <option value="functional">Fonctionnel</option>
@@ -186,11 +286,12 @@ const ManageEquipment = ({ userRole }) => {
               </Form.Select>
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Établissement</Form.Label>
+            <Form.Group className="mb-4">
+              <Form.Label className="small fw-bold">Établissement</Form.Label>
               <Form.Select
                 value={editedEstablishmentId}
                 onChange={(e) => setEditedEstablishmentId(e.target.value)}
+                required
               >
                 {establishments.map((establishment) => (
                   <option key={establishment.id} value={establishment.id}>
@@ -200,9 +301,11 @@ const ManageEquipment = ({ userRole }) => {
               </Form.Select>
             </Form.Group>
 
-            <Button variant="primary" type="submit">
-              Enregistrer les modifications
-            </Button>
+            <div className="d-grid">
+              <Button variant="primary" type="submit" className="py-2">
+                {t('common.save')}
+              </Button>
+            </div>
           </Form>
         </Modal.Body>
       </Modal>
