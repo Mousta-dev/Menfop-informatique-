@@ -158,6 +158,33 @@ app.get('/api/equipment', authenticateToken, async (req, res) => {
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
+app.get('/api/equipment/damaged', authenticateToken, async (req, res) => {
+    try {
+        let rows;
+        if (usePostgres) rows = (await sql`SELECT e.*, est.name as establishment_name FROM equipment e JOIN establishments est ON e.establishment_id = est.id WHERE e.status = 'damaged'`).rows;
+        else rows = await new Promise((res, rej) => dbSQLite.all('SELECT equipment.*, establishments.name as establishment_name FROM equipment LEFT JOIN establishments ON equipment.establishment_id = establishments.id WHERE status = "damaged"', [], (err, r) => err ? rej(err) : res(r)));
+        res.json({ message: "success", data: rows });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.get('/api/equipment/functional', authenticateToken, async (req, res) => {
+    try {
+        let rows;
+        if (usePostgres) rows = (await sql`SELECT e.*, est.name as establishment_name FROM equipment e JOIN establishments est ON e.establishment_id = est.id WHERE e.status = 'functional'`).rows;
+        else rows = await new Promise((res, rej) => dbSQLite.all('SELECT equipment.*, establishments.name as establishment_name FROM equipment LEFT JOIN establishments ON equipment.establishment_id = establishments.id WHERE status = "functional"', [], (err, r) => err ? rej(err) : res(r)));
+        res.json({ message: "success", data: rows });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.get('/api/equipment/new', authenticateToken, async (req, res) => {
+    try {
+        let rows;
+        if (usePostgres) rows = (await sql`SELECT e.*, est.name as establishment_name FROM equipment e JOIN establishments est ON e.establishment_id = est.id WHERE e.status = 'new'`).rows;
+        else rows = await new Promise((res, rej) => dbSQLite.all('SELECT equipment.*, establishments.name as establishment_name FROM equipment LEFT JOIN establishments ON equipment.establishment_id = establishments.id WHERE status = "new"', [], (err, r) => err ? rej(err) : res(r)));
+        res.json({ message: "success", data: rows });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
 app.post('/api/equipment', authenticateToken, async (req, res) => {
     const { name, status, establishment_id } = req.body;
     try {
