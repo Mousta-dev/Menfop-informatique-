@@ -11,11 +11,8 @@
       "use": "@vercel/node"
     }
   ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "server/index.js" },
-    { "src": "/static/(.*)", "dest": "/client/static/$1" },
-    { "src": "/menfop.png", "dest": "/client/menfop.png" },
-    { "src": "/manifest.json", "dest": "/client/manifest.json" },
-    { "src": "/(.*)", "dest": "/client/index.html" }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "server/index.js" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
