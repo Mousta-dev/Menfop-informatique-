@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 import './Login.css';
 
 const Login = ({ setIsAuthenticated, setUserRole }) => {
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,10 +22,10 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
         setUserRole(response.data.role);
         navigate('/');
       } else {
-        setError('Identifiants invalides');
+        setError(t('common.error_login_invalid'));
       }
     } catch (err) {
-      setError('Erreur lors de la connexion');
+      setError(t('common.error_login_failed'));
     }
   };
 
@@ -31,10 +33,10 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
     <div className="login-container">
       <form onSubmit={handleLogin} className="login-form">
         <img src="/menfop.png" alt="Logo" className="login-logo" />
-        <h2>Connexion</h2>
+        <h2>{t('common.login')}</h2>
         {error && <p className="error">{error}</p>}
         <div className="form-group">
-          <label>Username</label>
+          <label>{t('common.username')}</label>
           <input
             type="text"
             value={username}
@@ -43,7 +45,7 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
           />
         </div>
         <div className="form-group">
-          <label>Password</label>
+          <label>{t('common.password')}</label>
           <input
             type="password"
             value={password}
@@ -51,7 +53,7 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
             required
           />
         </div>
-        <button type="submit">Login</button>
+        <button type="submit">{t('common.login')}</button>
       </form>
     </div>
   );

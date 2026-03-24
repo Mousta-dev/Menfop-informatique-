@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, NavLink, Link, Navigate, useLocation } from 'react-router-dom';
-import { Container, Button, Offcanvas } from 'react-bootstrap';
+import { Container, Button, Offcanvas, ButtonGroup } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import Home from './components/Home';
 import Establishments from './components/Establishments';
 import NewEquipment from './components/NewEquipment';
@@ -18,6 +19,7 @@ import Login from './components/Login';
 import './App.css';
 
 const AppContent = () => {
+  const { t, i18n } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -40,58 +42,80 @@ const AppContent = () => {
     setShowMobileMenu(false);
   };
 
+  const changeLanguage = (lng) => {
+    i18n.changeLanguage(lng);
+  };
+
   const PrivateRoute = ({ children }) => {
     return isAuthenticated ? children : <Navigate to="/login" />;
   };
 
   const SidebarContent = () => (
     <>
-      <div className="sidebar-header">
-        <Link to="/" className="text-decoration-none d-flex align-items-center" onClick={() => setShowMobileMenu(false)}>
-          <img src="/menfop.png" alt="Logo" className="sidebar-logo" />
-          <span className="navbar-brand mb-0 h1">Menfop-infos</span>
-        </Link>
+      <div className="sidebar-header flex-column align-items-stretch">
+        <div className="d-flex align-items-center mb-3">
+          <Link to="/" className="text-decoration-none d-flex align-items-center" onClick={() => setShowMobileMenu(false)}>
+            <img src="/menfop.png" alt="Logo" className="sidebar-logo" />
+            <span className="navbar-brand mb-0 h1">Menfop-infos</span>
+          </Link>
+        </div>
+        <ButtonGroup size="sm" className="w-100 mb-2">
+          <Button 
+            variant={i18n.language === 'fr' ? 'primary' : 'outline-primary'} 
+            onClick={() => changeLanguage('fr')}
+            style={{ fontSize: '0.7rem' }}
+          >
+            FR
+          </Button>
+          <Button 
+            variant={i18n.language === 'en' ? 'primary' : 'outline-primary'} 
+            onClick={() => changeLanguage('en')}
+            style={{ fontSize: '0.7rem' }}
+          >
+            EN
+          </Button>
+        </ButtonGroup>
       </div>
       <div className="sidebar-content">
         <NavLink to="/" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          Tableau de bord
+          {t('sidebar.dashboard')}
         </NavLink>
         <NavLink to="/establishments" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          Établissements
+          {t('sidebar.establishments')}
         </NavLink>
         <NavLink to="/manage-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          Gérer Équipement
+          {t('sidebar.manage_equipment')}
         </NavLink>
         <NavLink to="/new-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          Nouveau Matériel
+          {t('sidebar.new_equipment')}
         </NavLink>
         <NavLink to="/damaged-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          Matériel Endommagé
+          {t('sidebar.damaged_equipment')}
         </NavLink>
         <NavLink to="/functional-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          Matériel Fonctionnel
+          {t('sidebar.functional_equipment')}
         </NavLink>
         <NavLink to="/new-mission" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          Nouvelle Mission
+          {t('sidebar.new_mission')}
         </NavLink>
         <NavLink to="/missions" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          Voir Missions
+          {t('sidebar.view_missions')}
         </NavLink>
         <NavLink to="/rapport" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          Rédiger Rapport
+          {t('sidebar.write_report')}
         </NavLink>
         <NavLink to="/reports" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          Voir Rapports
+          {t('sidebar.view_reports')}
         </NavLink>
         {userRole === 'administrateur' && (
           <NavLink to="/users" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''} text-danger`} onClick={() => setShowMobileMenu(false)}>
-            Gestion Utilisateurs
+            {t('sidebar.user_management')}
           </NavLink>
         )}
       </div>
       <div className="sidebar-footer">
         <Button variant="outline-danger" className="w-100 rounded-pill" onClick={handleLogout}>
-          Déconnexion
+          {t('sidebar.logout')}
         </Button>
       </div>
     </>
