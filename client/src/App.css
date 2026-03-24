@@ -15,127 +15,6 @@ body {
   margin: 0;
 }
 
-/* Elegant Navbar */
-.navbar {
-  background: rgba(255, 255, 255, 0.8) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  padding: 1rem 0;
-  transition: var(--transition);
-}
-
-.navbar-brand {
-  font-weight: 700;
-  color: var(--primary-violet) !important;
-  letter-spacing: -0.5px;
-}
-
-.nav-link {
-  color: #4b5563 !important;
-  font-weight: 500;
-  margin: 0 0.5rem;
-  transition: var(--transition);
-  border-radius: 8px;
-}
-
-.nav-link:hover {
-  color: var(--primary-violet) !important;
-  background-color: var(--light-violet);
-}
-
-/* Container Styling */
-.container.mt-3 {
-  background-color: transparent !important;
-  box-shadow: none !important;
-  padding-top: 2rem;
-}
-
-/* Divi-style Cards */
-.card {
-  border: none !important;
-  border-radius: 20px !important;
-  box-shadow: var(--card-shadow);
-  transition: var(--transition);
-  overflow: hidden;
-  background: #ffffff !important;
-  margin-bottom: 2rem;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-.card-header {
-  background-color: var(--light-violet) !important;
-  border-bottom: 1px solid rgba(139, 92, 246, 0.1) !important;
-  color: var(--dark-violet) !important;
-  font-weight: 600;
-  padding: 1.25rem;
-}
-
-/* Modern Buttons */
-.btn-primary {
-  background-color: var(--primary-violet) !important;
-  border: none !important;
-  border-radius: 50px !important;
-  padding: 0.6rem 1.5rem !important;
-  font-weight: 600 !important;
-  box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.3) !important;
-  transition: var(--transition) !important;
-}
-
-.btn-primary:hover {
-  background-color: var(--dark-violet) !important;
-  transform: scale(1.02);
-  box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.4) !important;
-}
-
-.btn-outline-light {
-  border-radius: 50px !important;
-  border: 2px solid var(--primary-violet) !important;
-  color: var(--primary-violet) !important;
-}
-
-.btn-outline-light:hover {
-  background-color: var(--primary-violet) !important;
-  color: white !important;
-}
-
-/* Form Controls */
-.form-control, .form-select {
-  border-radius: 12px !important;
-  border: 1px solid #e5e7eb !important;
-  padding: 0.75rem 1rem !important;
-  transition: var(--transition);
-}
-
-.form-control:focus {
-  border-color: var(--soft-violet) !important;
-  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1) !important;
-}
-
-/* Tables */
-.table {
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-
-.table thead th {
-  background-color: var(--light-violet) !important;
-  color: var(--dark-violet) !important;
-  border: none !important;
-  padding: 1rem !important;
-}
-
-.table td {
-  padding: 1rem !important;
-  vertical-align: middle !important;
-}
-
 /* Sidebar Styling */
 .app-container {
   display: flex;
@@ -143,7 +22,7 @@ body {
 }
 
 .sidebar {
-  width: 280px;
+  width: 240px;
   background: white;
   border-right: 1px solid rgba(139, 92, 246, 0.1);
   display: flex;
@@ -156,39 +35,42 @@ body {
 }
 
 .sidebar-header {
-  padding: 2rem 1.5rem;
+  padding: 1.5rem 1rem;
   display: flex;
   align-items: center;
   border-bottom: 1px solid rgba(139, 92, 246, 0.05);
 }
 
 .sidebar-logo {
-  width: 40px;
-  height: 40px;
-  margin-right: 12px;
+  width: 32px;
+  height: 32px;
+  margin-right: 10px;
+}
+
+.navbar-brand {
+  font-weight: 700;
+  color: var(--primary-violet) !important;
+  letter-spacing: -0.5px;
+  font-size: 1.1rem;
 }
 
 .sidebar-content {
   flex: 1;
-  padding: 1.5rem 1rem;
+  padding: 1rem 0.75rem;
   overflow-y: auto;
-}
-
-.sidebar-footer {
-  padding: 1.5rem;
-  border-top: 1px solid rgba(139, 92, 246, 0.05);
 }
 
 .sidebar-nav-link {
   display: flex;
   align-items: center;
-  padding: 0.8rem 1rem;
+  padding: 0.7rem 1rem;
   color: #4b5563;
   text-decoration: none;
-  border-radius: 12px;
-  margin-bottom: 0.5rem;
+  border-radius: 10px;
+  margin-bottom: 0.25rem;
   font-weight: 500;
   transition: var(--transition);
+  font-size: 0.95rem;
 }
 
 .sidebar-nav-link:hover {
@@ -199,37 +81,102 @@ body {
 .sidebar-nav-link.active {
   background-color: var(--primary-violet);
   color: white;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+}
+
+.sidebar-footer {
+  padding: 1rem;
+  border-top: 1px solid rgba(139, 92, 246, 0.05);
 }
 
 .main-content {
   flex: 1;
-  margin-left: 280px; /* Width of sidebar */
-  padding: 2rem;
+  margin-left: 240px;
+  padding: 1.25rem;
   background-color: var(--bg-color);
   transition: var(--transition);
 }
 
+/* Card Styling - Compact */
+.card {
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: var(--card-shadow);
+  transition: var(--transition);
+  overflow: hidden;
+  background: #ffffff !important;
+  margin-bottom: 1.25rem;
+}
+
+.card-header {
+  background-color: var(--light-violet) !important;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1) !important;
+  color: var(--dark-violet) !important;
+  font-weight: 600;
+  padding: 0.8rem 1rem;
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+/* Modern Buttons - Normal size */
+.btn {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  transition: var(--transition) !important;
+  padding: 0.4rem 1rem !important;
+}
+
+.btn-primary {
+  background-color: var(--primary-violet) !important;
+  border: none !important;
+  box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.2) !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--dark-violet) !important;
+  transform: translateY(-1px);
+}
+
+/* Form Controls */
+.form-control, .form-select {
+  border-radius: 8px !important;
+  border: 1px solid #e5e7eb !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.95rem;
+}
+
+/* Tables - Compact */
+.table {
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 0.95rem;
+}
+
+.table thead th {
+  background-color: var(--light-violet) !important;
+  color: var(--dark-violet) !important;
+  padding: 0.75rem !important;
+}
+
+.table td {
+  padding: 0.75rem !important;
+}
+
+/* Responsive adjustments */
 @media (max-width: 992px) {
   .sidebar {
     transform: translateX(-100%);
-    width: 250px;
+    width: 240px;
   }
-  
-  .sidebar.show {
-    transform: translateX(0);
-  }
-  
-  .main-content {
-    margin-left: 0;
-    padding: 1rem;
-  }
-
+  .sidebar.show { transform: translateX(0); }
+  .main-content { margin-left: 0; padding: 1rem; }
   .mobile-header {
     display: flex !important;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem;
+    padding: 0.75rem 1rem;
     background: white;
     position: sticky;
     top: 0;
@@ -238,56 +185,13 @@ body {
   }
 }
 
-.mobile-header {
-  display: none;
-}
-
-/* Rest of the titles and existing styles */
-h1, h2, h3 {
-  color: #111827;
-  font-weight: 800;
-  margin-bottom: 1.5rem;
-}
-
 @media (max-width: 768px) {
-  h1 { font-size: 1.8rem; }
-  h2 { font-size: 1.5rem; }
-  h3 { font-size: 1.3rem; }
-  
-  .container {
-    padding-left: 15px;
-    padding-right: 15px;
-  }
-  
-  .navbar-brand {
-    font-size: 1.1rem;
-  }
-
-  .nav-link {
-    margin: 0.2rem 0;
-    padding: 0.8rem 1rem !important;
-  }
-
-  /* Make tables scrollable on mobile */
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.3rem; }
   .table-responsive {
-    border-radius: 15px;
+    border-radius: 10px;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .card {
-    border-radius: 15px !important;
-    margin-bottom: 1.5rem;
-  }
-
-  .btn {
-    width: 100%;
-    margin-bottom: 0.5rem;
   }
 }
 
-/* Custom violet badge/accent */
-.accent-violet {
-  color: var(--primary-violet);
-  font-weight: 600;
-}
+.accent-violet { color: var(--primary-violet); font-weight: 600; }
