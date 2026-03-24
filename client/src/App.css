@@ -120,12 +120,18 @@ body {
   padding: 1.25rem;
 }
 
-/* Modern Buttons - Normal size */
+/* Modern Buttons - Compact size */
 .btn {
-  border-radius: 8px !important;
+  border-radius: 4px !important;
   font-weight: 600 !important;
   transition: var(--transition) !important;
-  padding: 0.4rem 1rem !important;
+  padding: 0.25rem 0.75rem !important;
+  font-size: 0.85rem !important;
+}
+
+.btn-sm {
+  padding: 0.15rem 0.5rem !important;
+  font-size: 0.75rem !important;
 }
 
 .btn-primary {
