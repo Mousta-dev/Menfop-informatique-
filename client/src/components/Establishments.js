@@ -129,7 +129,7 @@ const Establishments = ({ userRole }) => {
           />
         </Form.Group>
         <Button variant="primary" type="submit">
-          Add Establishment
+          Ajouter un établissement
         </Button>
       </Form>
 
@@ -156,7 +156,7 @@ const Establishments = ({ userRole }) => {
           <thead>
             <tr>
               <th>ID</th>
-              <th>Name</th>
+              <th>Nom</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -166,9 +166,9 @@ const Establishments = ({ userRole }) => {
                 <td>{establishment.id}</td>
                 <td>{establishment.name}</td>
                 <td>
-                  <Button variant="warning" size="sm" className="me-2" onClick={() => handleEdit(establishment)}>Edit</Button>
+                  <Button variant="warning" size="sm" className="me-2" onClick={() => handleEdit(establishment)}>Modifier</Button>
                   {userRole === 'administrateur' && (
-                    <Button variant="danger" size="sm" onClick={() => handleDelete(establishment.id)}>Delete</Button>
+                    <Button variant="danger" size="sm" onClick={() => handleDelete(establishment.id)}>Supprimer</Button>
                   )}
                 </td>
               </tr>
@@ -180,13 +180,13 @@ const Establishments = ({ userRole }) => {
       {/* Edit Establishment Modal */}
       <Modal show={showEditModal} onHide={handleCloseEditModal}>
         <Modal.Header closeButton>
-          <Modal.Title>Edit Establishment</Modal.Title>
+          <Modal.Title>Modifier l'Établissement</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {error && <Alert variant="danger">{error}</Alert>}
           <Form onSubmit={handleSaveEdit}>
             <Form.Group className="mb-3">
-              <Form.Label>Establishment Name</Form.Label>
+              <Form.Label>Nom de l'établissement</Form.Label>
               <Form.Control
                 type="text"
                 value={editedEstablishmentName}
@@ -194,7 +194,7 @@ const Establishments = ({ userRole }) => {
               />
             </Form.Group>
             <Button variant="primary" type="submit">
-              Save Changes
+              Enregistrer les modifications
             </Button>
           </Form>
         </Modal.Body>
