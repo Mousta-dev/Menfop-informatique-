@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Alert, Button } from 'react-bootstrap';
 import api from '../api';
 import { useParams } from 'react-router-dom';
@@ -9,11 +9,7 @@ const ReportView = () => {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    fetchReport();
-  }, [id]);
-
-  const fetchReport = async () => {
+  const fetchReport = useCallback(async () => {
     try {
       const response = await api.get(`/reports/${id}`);
       setReport(response.data.data);
@@ -22,7 +18,11 @@ const ReportView = () => {
       setError('Failed to fetch report.');
       setReport(null);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchReport();
+  }, [fetchReport]);
 
   const handleCopyShareUrl = () => {
     navigator.clipboard.writeText(window.location.href);

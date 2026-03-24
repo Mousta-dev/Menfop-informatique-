@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Alert, Form, Button, Card } from 'react-bootstrap';
 import api from '../api';
 
@@ -12,12 +12,7 @@ const FunctionalEquipment = () => {
   const [newEquipmentName, setNewEquipmentName] = useState('');
   const [selectedEstablishment, setSelectedEstablishment] = useState('');
 
-  useEffect(() => {
-    fetchFunctionalEquipment();
-    fetchEstablishments();
-  }, []);
-
-  const fetchFunctionalEquipment = async () => {
+  const fetchFunctionalEquipment = useCallback(async () => {
     try {
       const response = await api.get('/equipment/functional');
       setEquipment(response.data.data);
@@ -25,14 +20,9 @@ const FunctionalEquipment = () => {
       console.error('Error fetching functional equipment:', err);
       setError('Failed to fetch functional equipment.');
     }
-  };
+  }, []);
 
-  const filteredEquipment = equipment.filter((item) =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.establishment_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const fetchEstablishments = async () => {
+  const fetchEstablishments = useCallback(async () => {
     try {
       const response = await api.get('/establishments');
       setEstablishments(response.data.data);
@@ -41,10 +31,19 @@ const FunctionalEquipment = () => {
       }
     } catch (err) {
       console.error('Error fetching establishments:', err);
-      // Only set error if no establishments can be fetched, otherwise, it's fine for adding equipment
-      if (establishments.length === 0) setError('Failed to load establishments for adding equipment.');
+      setError('Failed to load establishments for adding equipment.');
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchFunctionalEquipment();
+    fetchEstablishments();
+  }, [fetchFunctionalEquipment, fetchEstablishments]);
+
+  const filteredEquipment = equipment.filter((item) =>
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.establishment_name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleAddFunctionalEquipment = async (e) => {
     e.preventDefault();

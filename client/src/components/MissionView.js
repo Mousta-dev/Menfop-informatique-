@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Alert, Button, Badge } from 'react-bootstrap';
 import { missionsApi } from '../api';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -9,11 +9,7 @@ const MissionView = () => {
   const [mission, setMission] = useState(null);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchMission();
-  }, [id]);
-
-  const fetchMission = async () => {
+  const fetchMission = useCallback(async () => {
     try {
       console.log('Fetching mission details for ID:', id);
       const response = await missionsApi.getMission(id);
@@ -25,7 +21,11 @@ const MissionView = () => {
       setError(`Impossible de charger les détails de la mission : ${serverError}`);
       setMission(null);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchMission();
+  }, [fetchMission]);
 
   if (error) {
     return (
