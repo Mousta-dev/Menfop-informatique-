@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Link, Navigate, useLocation } from 'react-router-dom';
-import { Navbar, Nav, Container, Button } from 'react-bootstrap';
+import { BrowserRouter as Router, Route, Routes, NavLink, Link, Navigate, useLocation } from 'react-router-dom';
+import { Container, Button, Offcanvas } from 'react-bootstrap';
 import Home from './components/Home';
 import Establishments from './components/Establishments';
 import NewEquipment from './components/NewEquipment';
@@ -20,6 +20,7 @@ import './App.css';
 const AppContent = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -36,76 +37,134 @@ const AppContent = () => {
     localStorage.removeItem('role');
     setIsAuthenticated(false);
     setUserRole(null);
+    setShowMobileMenu(false);
   };
 
   const PrivateRoute = ({ children }) => {
     return isAuthenticated ? children : <Navigate to="/login" />;
   };
 
-  return (
+  const SidebarContent = () => (
     <>
-      {location.pathname !== '/login' && (
-        <Navbar expand="lg" className="navbar">
-          <Container>
-            <Navbar.Brand as={Link} to="/">
-              <img
-                src="/menfop.png"
-                width="30"
-                height="30"
-                className="d-inline-block align-top me-2"
-                alt="Menfop Logo"
-              />
-              Menfop-infos
-            </Navbar.Brand>
-            <Navbar.Toggle aria-controls="basic-navbar-nav" />
-            <Navbar.Collapse id="basic-navbar-nav">
-              {isAuthenticated && (
-                <Nav className="me-auto">
-                  <Nav.Link as={Link} to="/establishments">Etablissements</Nav.Link>
-                  <Nav.Link as={Link} to="/manage-equipment">Gérer Equipement</Nav.Link>
-                  <Nav.Link as={Link} to="/new-equipment">Nouveau Materiel</Nav.Link>
-                  <Nav.Link as={Link} to="/damaged-equipment">Materiel Endommagé</Nav.Link>
-                  <Nav.Link as={Link} to="/functional-equipment">Materiel Fonctionnel</Nav.Link>
-                  <Nav.Link as={Link} to="/new-mission">Nouvelle Mission</Nav.Link>
-                  <Nav.Link as={Link} to="/missions">Voir Missions</Nav.Link>
-                  <Nav.Link as={Link} to="/rapport">Rapport</Nav.Link>
-                  <Nav.Link as={Link} to="/reports">Voir Rapports</Nav.Link>
-                  {userRole === 'administrateur' && (
-                    <Nav.Link as={Link} to="/users" className="fw-bold text-warning">Gestion Utilisateurs</Nav.Link>
-                  )}
-                </Nav>
-              )}
-
-              <Nav>
-                {isAuthenticated ? (
-                  <Button variant="outline-light" onClick={handleLogout}>Logout</Button>
-                ) : (
-                  null
-                )}
-              </Nav>
-            </Navbar.Collapse>
-          </Container>
-        </Navbar>
-      )}
-      <Container className="mt-3">
-        <Routes>
-          <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} setUserRole={setUserRole} />} />
-          <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
-          <Route path="/establishments" element={<PrivateRoute><Establishments userRole={userRole} /></PrivateRoute>} />
-          <Route path="/new-equipment" element={<PrivateRoute><NewEquipment /></PrivateRoute>} />
-          <Route path="/damaged-equipment" element={<PrivateRoute><DamagedEquipment /></PrivateRoute>} />
-          <Route path="/functional-equipment" element={<PrivateRoute><FunctionalEquipment /></PrivateRoute>} />
-          <Route path="/manage-equipment" element={<PrivateRoute><ManageEquipment userRole={userRole} /></PrivateRoute>} />
-          <Route path="/rapport" element={<PrivateRoute><Rapport /></PrivateRoute>} />
-          <Route path="/reports" element={<PrivateRoute><ReportsList /></PrivateRoute>} />
-          <Route path="/reports/:id" element={<PrivateRoute><ReportView /></PrivateRoute>} />
-          <Route path="/new-mission" element={<PrivateRoute><MissionForm /></PrivateRoute>} />
-          <Route path="/missions" element={<PrivateRoute><MissionsList /></PrivateRoute>} />
-          <Route path="/missions/:id" element={<PrivateRoute><MissionView /></PrivateRoute>} />
-          <Route path="/users" element={<PrivateRoute>{userRole === 'administrateur' ? <UserManagement /> : <Navigate to="/" />}</PrivateRoute>} />
-        </Routes>
-      </Container>
+      <div className="sidebar-header">
+        <Link to="/" className="text-decoration-none d-flex align-items-center" onClick={() => setShowMobileMenu(false)}>
+          <img src="/menfop.png" alt="Logo" className="sidebar-logo" />
+          <span className="navbar-brand mb-0 h1">Menfop-infos</span>
+        </Link>
+      </div>
+      <div className="sidebar-content">
+        <NavLink to="/" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+          Tableau de bord
+        </NavLink>
+        <NavLink to="/establishments" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+          Établissements
+        </NavLink>
+        <NavLink to="/manage-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+          Gérer Équipement
+        </NavLink>
+        <NavLink to="/new-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+          Nouveau Matériel
+        </NavLink>
+        <NavLink to="/damaged-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+          Matériel Endommagé
+        </NavLink>
+        <NavLink to="/functional-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+          Matériel Fonctionnel
+        </NavLink>
+        <NavLink to="/new-mission" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+          Nouvelle Mission
+        </NavLink>
+        <NavLink to="/missions" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+          Voir Missions
+        </NavLink>
+        <NavLink to="/rapport" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+          Rédiger Rapport
+        </NavLink>
+        <NavLink to="/reports" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+          Voir Rapports
+        </NavLink>
+        {userRole === 'administrateur' && (
+          <NavLink to="/users" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''} text-danger`} onClick={() => setShowMobileMenu(false)}>
+            Gestion Utilisateurs
+          </NavLink>
+        )}
+      </div>
+      <div className="sidebar-footer">
+        <Button variant="outline-danger" className="w-100 rounded-pill" onClick={handleLogout}>
+          Déconnexion
+        </Button>
+      </div>
     </>
+  );
+
+  if (location.pathname === '/login') {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} setUserRole={setUserRole} />} />
+        <Route path="*" element={<Navigate to="/login" />} />
+      </Routes>
+    );
+  }
+
+  return (
+    <div className="app-container">
+      {/* Sidebar for Desktop */}
+      {isAuthenticated && (
+        <aside className="sidebar d-none d-lg-flex">
+          <SidebarContent />
+        </aside>
+      )}
+
+      {/* Mobile Header */}
+      {isAuthenticated && (
+        <div className="mobile-header d-lg-none">
+          <Link to="/" className="text-decoration-none d-flex align-items-center">
+            <img src="/menfop.png" alt="Logo" width="30" height="30" className="me-2" />
+            <span className="navbar-brand mb-0 h1" style={{ fontSize: '1.2rem' }}>Menfop-infos</span>
+          </Link>
+          <Button variant="link" className="text-dark p-0" onClick={() => setShowMobileMenu(true)}>
+            <span className="navbar-toggler-icon" style={{ filter: 'invert(0)' }}></span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" className="bi bi-list" viewBox="0 0 16 16">
+              <path fillRule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
+            </svg>
+          </Button>
+        </div>
+      )}
+
+      {/* Mobile Sidebar (Offcanvas) */}
+      <Offcanvas show={showMobileMenu} onHide={() => setShowMobileMenu(false)} className="sidebar-mobile">
+        <Offcanvas.Header closeButton>
+          <Offcanvas.Title>Menu</Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body className="p-0">
+          <div className="d-flex flex-column h-100">
+            <SidebarContent />
+          </div>
+        </Offcanvas.Body>
+      </Offcanvas>
+
+      {/* Main Content Area */}
+      <main className="main-content">
+        <Container fluid>
+          <Routes>
+            <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
+            <Route path="/establishments" element={<PrivateRoute><Establishments userRole={userRole} /></PrivateRoute>} />
+            <Route path="/new-equipment" element={<PrivateRoute><NewEquipment /></PrivateRoute>} />
+            <Route path="/damaged-equipment" element={<PrivateRoute><DamagedEquipment /></PrivateRoute>} />
+            <Route path="/functional-equipment" element={<PrivateRoute><FunctionalEquipment /></PrivateRoute>} />
+            <Route path="/manage-equipment" element={<PrivateRoute><ManageEquipment userRole={userRole} /></PrivateRoute>} />
+            <Route path="/rapport" element={<PrivateRoute><Rapport /></PrivateRoute>} />
+            <Route path="/reports" element={<PrivateRoute><ReportsList /></PrivateRoute>} />
+            <Route path="/reports/:id" element={<PrivateRoute><ReportView /></PrivateRoute>} />
+            <Route path="/new-mission" element={<PrivateRoute><MissionForm /></PrivateRoute>} />
+            <Route path="/missions" element={<PrivateRoute><MissionsList /></PrivateRoute>} />
+            <Route path="/missions/:id" element={<PrivateRoute><MissionView /></PrivateRoute>} />
+            <Route path="/users" element={<PrivateRoute>{userRole === 'administrateur' ? <UserManagement /> : <Navigate to="/" />}</PrivateRoute>} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </Container>
+      </main>
+    </div>
   );
 };
 

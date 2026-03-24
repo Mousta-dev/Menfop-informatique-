@@ -136,11 +136,154 @@ body {
   vertical-align: middle !important;
 }
 
-/* Titles */
+/* Sidebar Styling */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 280px;
+  background: white;
+  border-right: 1px solid rgba(139, 92, 246, 0.1);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  z-index: 1000;
+  transition: var(--transition);
+  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.02);
+}
+
+.sidebar-header {
+  padding: 2rem 1.5rem;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.05);
+}
+
+.sidebar-logo {
+  width: 40px;
+  height: 40px;
+  margin-right: 12px;
+}
+
+.sidebar-content {
+  flex: 1;
+  padding: 1.5rem 1rem;
+  overflow-y: auto;
+}
+
+.sidebar-footer {
+  padding: 1.5rem;
+  border-top: 1px solid rgba(139, 92, 246, 0.05);
+}
+
+.sidebar-nav-link {
+  display: flex;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  color: #4b5563;
+  text-decoration: none;
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.sidebar-nav-link:hover {
+  background-color: var(--light-violet);
+  color: var(--primary-violet);
+}
+
+.sidebar-nav-link.active {
+  background-color: var(--primary-violet);
+  color: white;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 280px; /* Width of sidebar */
+  padding: 2rem;
+  background-color: var(--bg-color);
+  transition: var(--transition);
+}
+
+@media (max-width: 992px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 250px;
+  }
+  
+  .sidebar.show {
+    transform: translateX(0);
+  }
+  
+  .main-content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .mobile-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+  }
+}
+
+.mobile-header {
+  display: none;
+}
+
+/* Rest of the titles and existing styles */
 h1, h2, h3 {
   color: #111827;
   font-weight: 800;
   margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  h1 { font-size: 1.8rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.3rem; }
+  
+  .container {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  .navbar-brand {
+    font-size: 1.1rem;
+  }
+
+  .nav-link {
+    margin: 0.2rem 0;
+    padding: 0.8rem 1rem !important;
+  }
+
+  /* Make tables scrollable on mobile */
+  .table-responsive {
+    border-radius: 15px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .card {
+    border-radius: 15px !important;
+    margin-bottom: 1.5rem;
+  }
+
+  .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
 }
 
 /* Custom violet badge/accent */

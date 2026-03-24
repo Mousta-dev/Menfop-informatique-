@@ -105,56 +105,58 @@ const Home = () => {
       {error && <Alert variant="danger">{error}</Alert>}
 
       <Row className="mb-4">
-        <Col md={6}>
-          <Card>
+        <Col xs={12} md={6} className="mb-3 mb-md-0">
+          <Card className="h-100">
             <Card.Body>
               <Card.Title>Total Equipment</Card.Title>
-              <Card.Text className="fs-1 text-center">{summaryData.totalEquipment}</Card.Text>
+              <Card.Text className="fs-1 text-center py-4">{summaryData.totalEquipment}</Card.Text>
             </Card.Body>
           </Card>
         </Col>
-        <Col md={6}>
-          <Card>
+        <Col xs={12} md={6}>
+          <Card className="h-100">
             <Card.Body>
               <Card.Title>Equipment by Status</Card.Title>
-              <Table striped bordered hover size="sm">
-                <thead>
-                  <tr>
-                    <th>Status</th>
-                    <th>Count</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {summaryData.statusCounts.map((item, index) => (
-                    <tr key={index}>
-                      <td>{item.status}</td>
-                      <td>{item.count}</td>
+              <div className="table-responsive">
+                <Table striped bordered hover size="sm" className="mb-0">
+                  <thead>
+                    <tr>
+                      <th>Status</th>
+                      <th>Count</th>
                     </tr>
-                  ))}
-                </tbody>
-              </Table>
+                  </thead>
+                  <tbody>
+                    {summaryData.statusCounts.map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.status}</td>
+                        <td>{item.count}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </div>
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
       <Row className="mb-4">
-        <Col md={6}>
-          <Card>
+        <Col xs={12} lg={6} className="mb-4">
+          <Card className="h-100">
             <Card.Body>
               <Card.Title>Equipment Status Distribution</Card.Title>
-              <div style={{ maxHeight: '300px' }}>
-                <Pie data={pieChartData} />
+              <div style={{ position: 'relative', height: '300px', width: '100%' }}>
+                <Pie data={pieChartData} options={{ maintainAspectRatio: false }} />
               </div>
             </Card.Body>
           </Card>
         </Col>
-        <Col md={6}>
-          <Card>
+        <Col xs={12} lg={6} className="mb-4">
+          <Card className="h-100">
             <Card.Body>
               <Card.Title>Equipment per Establishment</Card.Title>
-              <div style={{ maxHeight: '300px' }}>
-                <Bar data={barChartData} options={barChartOptions} />
+              <div style={{ position: 'relative', height: '300px', width: '100%' }}>
+                <Bar data={barChartData} options={{ ...barChartOptions, maintainAspectRatio: false }} />
               </div>
             </Card.Body>
           </Card>
@@ -162,26 +164,28 @@ const Home = () => {
       </Row>
 
       <Row>
-        <Col>
+        <Col xs={12}>
           <Card>
             <Card.Body>
               <Card.Title>Equipment Count by Establishment (Table)</Card.Title>
-              <Table striped bordered hover size="sm">
-                <thead>
-                  <tr>
-                    <th>Establishment</th>
-                    <th>Equipment Count</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredEquipmentByEstablishment.map((item, index) => (
-                    <tr key={index}>
-                      <td>{item.establishment_name}</td>
-                      <td>{item.equipmentCount}</td>
+              <div className="table-responsive">
+                <Table striped bordered hover size="sm">
+                  <thead>
+                    <tr>
+                      <th>Establishment</th>
+                      <th>Equipment Count</th>
                     </tr>
-                  ))}
-                </tbody>
-              </Table>
+                  </thead>
+                  <tbody>
+                    {filteredEquipmentByEstablishment.map((item, index) => (
+                      <tr key={index}>
+                        <td>{item.establishment_name}</td>
+                        <td>{item.equipmentCount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </div>
             </Card.Body>
           </Card>
         </Col>

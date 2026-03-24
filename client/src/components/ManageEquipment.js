@@ -103,9 +103,9 @@ const ManageEquipment = ({ userRole }) => {
 
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h1>Gérer tous les équipements</h1>
-        <div className="d-flex gap-2" style={{ width: '400px' }}>
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
+        <h1 className="mb-3 mb-md-0">Gérer tous les équipements</h1>
+        <div className="d-flex gap-2 w-100 w-md-auto" style={{ maxWidth: '400px' }}>
             <Form.Control
             type="text"
             placeholder="Rechercher un équipement..."
@@ -126,33 +126,35 @@ const ManageEquipment = ({ userRole }) => {
       {filteredEquipment.length === 0 ? (
         <p>Aucun équipement trouvé.</p>
       ) : (
-        <Table striped bordered hover>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nom</th>
-              <th>Statut</th>
-              <th>Établissement</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredEquipment.map((item) => (
-              <tr key={item.id}>
-                <td>{item.id}</td>
-                <td>{item.name}</td>
-                <td>{item.status}</td>
-                <td>{item.establishment_name}</td>
-                <td>
-                  <Button variant="warning" size="sm" className="me-2" onClick={() => handleEdit(item)}>Modifier</Button>
-                  {userRole === 'administrateur' && (
-                    <Button variant="danger" size="sm" onClick={() => handleDelete(item.id)}>Supprimer</Button>
-                  )}
-                </td>
+        <div className="table-responsive">
+          <Table striped bordered hover>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Statut</th>
+                <th>Établissement</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </Table>
+            </thead>
+            <tbody>
+              {filteredEquipment.map((item) => (
+                <tr key={item.id}>
+                  <td>{item.id}</td>
+                  <td>{item.name}</td>
+                  <td>{item.status}</td>
+                  <td>{item.establishment_name}</td>
+                  <td className="text-nowrap">
+                    <Button variant="warning" size="sm" className="me-2" onClick={() => handleEdit(item)}>Modifier</Button>
+                    {userRole === 'administrateur' && (
+                      <Button variant="danger" size="sm" onClick={() => handleDelete(item.id)}>Supprimer</Button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </div>
       )}
 
       {/* Edit Equipment Modal */}
