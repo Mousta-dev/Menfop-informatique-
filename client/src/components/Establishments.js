@@ -28,7 +28,7 @@ const Establishments = ({ userRole }) => {
   };
 
   const filteredEstablishments = establishments.filter((e) =>
-    e.name.toLowerCase().includes(searchTerm.toLowerCase())
+    e.name && e.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
   );
 
   const handleAddEstablishment = async (e) => {
@@ -134,17 +134,23 @@ const Establishments = ({ userRole }) => {
       </Form>
 
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2>Current Establishments</h2>
-        <Form.Control
-          type="text"
-          placeholder="Rechercher un établissement..."
-          style={{ width: '300px' }}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+        <h2>Établissements Actuels</h2>
+        <div className="d-flex gap-2" style={{ width: '400px' }}>
+            <Form.Control
+            type="text"
+            placeholder="Rechercher un établissement..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+                <Button variant="outline-secondary" onClick={() => setSearchTerm('')}>
+                    Effacer
+                </Button>
+            )}
+        </div>
       </div>
       {filteredEstablishments.length === 0 ? (
-        <p>No establishments found.</p>
+        <p>Aucun établissement trouvé.</p>
       ) : (
         <Table striped bordered hover>
           <thead>

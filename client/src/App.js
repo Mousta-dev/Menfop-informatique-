@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link, Navigate, useLocation } from 'react-router-dom';
-import { Navbar, Nav, Container, Button, Form } from 'react-bootstrap';
+import { Navbar, Nav, Container, Button } from 'react-bootstrap';
 import Home from './components/Home';
 import Establishments from './components/Establishments';
 import NewEquipment from './components/NewEquipment';

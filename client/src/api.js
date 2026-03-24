@@ -2,7 +2,7 @@ import axios from 'axios';
 
 
 const api = axios.create({
-  baseURL: `http://${window.location.hostname}:3001/api`,
+  baseURL: '/api',
 });
 
 api.interceptors.request.use(
