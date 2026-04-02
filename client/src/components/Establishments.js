@@ -128,8 +128,8 @@ const Establishments = ({ userRole }) => {
             onChange={(e) => setNewEstablishmentName(e.target.value)}
           />
         </Form.Group>
-        <Button variant="primary" type="submit">
-          Ajouter un établissement
+        <Button variant="primary" type="submit" className="px-3 btn-ajouter">
+          <span className="me-2">➕</span> Ajouter un établissement
         </Button>
       </Form>
 
@@ -157,7 +157,7 @@ const Establishments = ({ userRole }) => {
             <tr>
               <th>ID</th>
               <th>Nom</th>
-              <th>Actions</th>
+              <th className="text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -165,10 +165,14 @@ const Establishments = ({ userRole }) => {
               <tr key={establishment.id}>
                 <td>{establishment.id}</td>
                 <td>{establishment.name}</td>
-                <td>
-                  <Button variant="warning" size="sm" className="me-2" onClick={() => handleEdit(establishment)}>Modifier</Button>
+                <td className="text-center">
+                  <Button variant="warning" size="sm" className="me-2 btn-modifier" onClick={() => handleEdit(establishment)} title="Modifier">
+                    ✏️ <span className="d-none d-md-inline ms-1">Modifier</span>
+                  </Button>
                   {userRole === 'administrateur' && (
-                    <Button variant="danger" size="sm" onClick={() => handleDelete(establishment.id)}>Supprimer</Button>
+                    <Button variant="danger" size="sm" className="btn-supprimer" onClick={() => handleDelete(establishment.id)} title="Supprimer">
+                      🗑️ <span className="d-none d-md-inline ms-1">Supprimer</span>
+                    </Button>
                   )}
                 </td>
               </tr>

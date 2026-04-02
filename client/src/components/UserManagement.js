@@ -167,9 +167,9 @@ const UserManagement = () => {
                 <option value="administrateur">Administrateur</option>
               </Form.Select>
             </div>
-            <div className="col-md-3">
-              <Button variant="success" type="submit" className="w-100">
-                Ajouter
+            <div className="col-md-3 d-flex align-items-end">
+              <Button variant="success" type="submit" className="px-3 btn-ajouter">
+                <span className="me-2">➕</span> Ajouter
               </Button>
             </div>
           </Form>
@@ -182,7 +182,7 @@ const UserManagement = () => {
             <th>ID</th>
             <th>Nom d'utilisateur</th>
             <th>Rôle</th>
-            <th>Actions</th>
+            <th className="text-center">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -195,12 +195,12 @@ const UserManagement = () => {
                   {user.role}
                 </span>
               </td>
-              <td>
-                <Button variant="warning" size="sm" className="me-2" onClick={() => handleEdit(user)}>
-                  Modifier
+              <td className="text-center">
+                <Button variant="warning" size="sm" className="me-2 btn-modifier" onClick={() => handleEdit(user)} title="Modifier">
+                  ✏️ <span className="d-none d-md-inline ms-1">Modifier</span>
                 </Button>
-                <Button variant="danger" size="sm" onClick={() => handleDelete(user.id)}>
-                  Supprimer
+                <Button variant="danger" size="sm" className="btn-supprimer" onClick={() => handleDelete(user.id)} title="Supprimer">
+                  🗑️ <span className="d-none d-md-inline ms-1">Supprimer</span>
                 </Button>
               </td>
             </tr>

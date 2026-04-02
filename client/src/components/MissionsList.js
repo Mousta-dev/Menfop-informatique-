@@ -69,8 +69,8 @@ const MissionsList = () => {
                     <td>{new Date(mission.created_at).toLocaleString()}</td>
                     <td>
                       {/* You can add a view/edit button here if needed */}
-                      <Button as={Link} to={`/missions/${mission.id}`} variant="info" size="sm">
-                        Voir
+                      <Button as={Link} to={`/missions/${mission.id}`} variant="info" size="sm" title="Voir">
+                        👁️ <span className="d-none d-md-inline ms-1">Voir</span>
                       </Button>
                     </td>
                   </tr>

@@ -62,8 +62,8 @@ const ReportsList = () => {
                     <td>{report.content.substring(0, 100)}...</td> {/* Show first 100 chars */}
                     <td>{new Date(report.created_at).toLocaleString()}</td>
                     <td>
-                      <Button as={Link} to={`/reports/${report.id}`} variant="info" size="sm">
-                        Voir
+                      <Button as={Link} to={`/reports/${report.id}`} variant="info" size="sm" title="Voir">
+                        👁️ <span className="d-none d-md-inline ms-1">Voir</span>
                       </Button>
                     </td>
                   </tr>
