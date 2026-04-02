@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "concurrently \"npm run start --prefix server\" \"npm run start --prefix client\"",
-    "build": "npm install --prefix client && CI=false npm run build --prefix client",
+    "build": "npm install --prefix client --legacy-peer-deps && CI=false npm run build --prefix client",
     "build-client": "npm run build --prefix client",
     "start-prod": "npm run start --prefix server",
     "test": "echo \"Error: no test specified\" && exit 1"
