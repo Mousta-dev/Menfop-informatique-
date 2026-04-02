@@ -197,10 +197,10 @@ const UserManagement = () => {
               </td>
               <td className="text-center">
                 <Button variant="warning" size="sm" className="me-2 btn-modifier" onClick={() => handleEdit(user)} title="Modifier">
-                  ✏️ <span className="d-none d-md-inline ms-1">Modifier</span>
+                  ✏️
                 </Button>
                 <Button variant="danger" size="sm" className="btn-supprimer" onClick={() => handleDelete(user.id)} title="Supprimer">
-                  🗑️ <span className="d-none d-md-inline ms-1">Supprimer</span>
+                  🗑️
                 </Button>
               </td>
             </tr>

@@ -230,26 +230,25 @@ const ManageEquipment = ({ userRole }) => {
                         </span>
                     </td>
                     <td className="px-4 text-end">
-                      <Button 
-                        variant="warning" 
-                        size="sm" 
+                      <Button
+                        variant="warning"
+                        size="sm"
                         className="me-2" 
                         onClick={() => handleEdit(item)}
                         title={t('common.edit')}
                       >
-                        ✏️ <span className="d-none d-md-inline ms-1">{t('common.edit')}</span>
+                        ✏️
                       </Button>
                       {userRole === 'administrateur' && (
-                        <Button 
-                          variant="danger" 
-                          size="sm" 
+                        <Button
+                          variant="danger"
+                          size="sm"
                           onClick={() => handleDelete(item.id)}
                           title={t('common.delete')}
                         >
-                          🗑️ <span className="d-none d-md-inline ms-1">{t('common.delete')}</span>
+                          🗑️
                         </Button>
-                      )}
-                    </td>
+                      )}                    </td>
                   </tr>
                 ))
               )}

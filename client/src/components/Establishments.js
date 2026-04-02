@@ -167,11 +167,11 @@ const Establishments = ({ userRole }) => {
                 <td>{establishment.name}</td>
                 <td className="text-center">
                   <Button variant="warning" size="sm" className="me-2 btn-modifier" onClick={() => handleEdit(establishment)} title="Modifier">
-                    ✏️ <span className="d-none d-md-inline ms-1">Modifier</span>
+                    ✏️
                   </Button>
                   {userRole === 'administrateur' && (
                     <Button variant="danger" size="sm" className="btn-supprimer" onClick={() => handleDelete(establishment.id)} title="Supprimer">
-                      🗑️ <span className="d-none d-md-inline ms-1">Supprimer</span>
+                      🗑️
                     </Button>
                   )}
                 </td>
