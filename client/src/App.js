@@ -23,6 +23,7 @@ const AppContent = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // État de chargement initial
   const location = useLocation();
 
   useEffect(() => {
@@ -32,6 +33,7 @@ const AppContent = () => {
       setIsAuthenticated(true);
       setUserRole(role);
     }
+    setIsLoading(false); // Chargement terminé après vérification du token
   }, []);
 
   const handleLogout = () => {
@@ -47,6 +49,7 @@ const AppContent = () => {
   };
 
   const PrivateRoute = ({ children }) => {
+    if (isLoading) return null; // Ne rien afficher pendant la vérification
     return isAuthenticated ? children : <Navigate to="/login" />;
   };
 
