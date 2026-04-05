@@ -140,6 +140,31 @@ app.post('/api/establishments', authenticateToken, async (req, res) => {
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
+app.put('/api/establishments/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    const { name } = req.body;
+    try {
+        if (usePostgres) {
+            await sql`UPDATE establishments SET name = ${name} WHERE id = ${id}`;
+        } else {
+            await new Promise((res, rej) => dbSQLite.run('UPDATE establishments SET name = ? WHERE id = ?', [name, id], (err) => err ? rej(err) : res()));
+        }
+        res.json({ message: "Établissement mis à jour avec succès" });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.delete('/api/establishments/:id', authenticateToken, authorizeRole('administrateur'), async (req, res) => {
+    const { id } = req.params;
+    try {
+        if (usePostgres) {
+            await sql`DELETE FROM establishments WHERE id = ${id}`;
+        } else {
+            await new Promise((res, rej) => dbSQLite.run('DELETE FROM establishments WHERE id = ?', [id], (err) => err ? rej(err) : res()));
+        }
+        res.json({ message: "Établissement supprimé avec succès" });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
 app.get('/api/equipment', authenticateToken, async (req, res) => {
     const { status, establishment_id } = req.query;
     try {
@@ -201,6 +226,31 @@ app.post('/api/equipment', authenticateToken, async (req, res) => {
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
+app.put('/api/equipment/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    const { name, status, establishment_id } = req.body;
+    try {
+        if (usePostgres) {
+            await sql`UPDATE equipment SET name = ${name}, status = ${status}, establishment_id = ${establishment_id} WHERE id = ${id}`;
+        } else {
+            await new Promise((res, rej) => dbSQLite.run('UPDATE equipment SET name = ?, status = ?, establishment_id = ? WHERE id = ?', [name, status, establishment_id, id], (err) => err ? rej(err) : res()));
+        }
+        res.json({ message: "Équipement mis à jour avec succès" });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.delete('/api/equipment/:id', authenticateToken, authorizeRole('administrateur'), async (req, res) => {
+    const { id } = req.params;
+    try {
+        if (usePostgres) {
+            await sql`DELETE FROM equipment WHERE id = ${id}`;
+        } else {
+            await new Promise((res, rej) => dbSQLite.run('DELETE FROM equipment WHERE id = ?', [id], (err) => err ? rej(err) : res()));
+        }
+        res.json({ message: "Équipement supprimé avec succès" });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
 app.get('/api/reports', authenticateToken, async (req, res) => {
     try {
         let rows;
@@ -225,12 +275,73 @@ app.post('/api/reports', authenticateToken, async (req, res) => {
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
+app.delete('/api/reports/:id', authenticateToken, authorizeRole('administrateur'), async (req, res) => {
+    const { id } = req.params;
+    try {
+        if (usePostgres) {
+            await sql`DELETE FROM reports WHERE id = ${id}`;
+        } else {
+            await new Promise((res, rej) => dbSQLite.run('DELETE FROM reports WHERE id = ?', [id], (err) => err ? rej(err) : res()));
+        }
+        res.json({ message: "Rapport supprimé avec succès" });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.get('/api/reports/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    try {
+        let row;
+        if (usePostgres) {
+            const result = await sql`SELECT * FROM reports WHERE id = ${id}`;
+            row = result.rows[0];
+        } else {
+            row = await new Promise((res, rej) => dbSQLite.get('SELECT * FROM reports WHERE id = ?', [id], (err, r) => err ? rej(err) : res(r)));
+        }
+        if (row) res.json({ message: "success", data: row });
+        else res.status(404).json({ error: "Rapport non trouvé" });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
 app.get('/api/missions', authenticateToken, async (req, res) => {
     try {
         let rows;
         if (usePostgres) rows = (await sql`SELECT * FROM missions ORDER BY created_at DESC`).rows;
         else rows = await new Promise((res, rej) => dbSQLite.all('SELECT * FROM missions ORDER BY created_at DESC', [], (err, r) => err ? rej(err) : res(r)));
         res.json({ message: "success", data: rows });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.get('/api/missions/summary', authenticateToken, async (req, res) => {
+    try {
+        if (usePostgres) {
+            const total = (await sql`SELECT COUNT(*) as count FROM missions`).rows[0].count;
+            const statusCounts = (await sql`SELECT status, COUNT(*) as count FROM missions GROUP BY status`).rows;
+            res.json({ message: "success", data: { 
+                totalMissions: parseInt(total) || 0, 
+                statusCounts: statusCounts.map(s => ({ ...s, count: parseInt(s.count) }))
+            } });
+        } else {
+            dbSQLite.get('SELECT COUNT(*) as totalMissions FROM missions', (err, total) => {
+                dbSQLite.all('SELECT status, COUNT(*) as count FROM missions GROUP BY status', [], (err, statusCounts) => {
+                    res.json({ message: "success", data: { totalMissions: total ? total.totalMissions : 0, statusCounts: statusCounts || [] } });
+                });
+            });
+        }
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.get('/api/missions/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    try {
+        let row;
+        if (usePostgres) {
+            const result = await sql`SELECT * FROM missions WHERE id = ${id}`;
+            row = result.rows[0];
+        } else {
+            row = await new Promise((res, rej) => dbSQLite.get('SELECT * FROM missions WHERE id = ?', [id], (err, r) => err ? rej(err) : res(r)));
+        }
+        if (row) res.json({ message: "success", data: row });
+        else res.status(404).json({ error: "Mission non trouvée" });
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
@@ -249,22 +360,28 @@ app.post('/api/missions', authenticateToken, async (req, res) => {
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
-app.get('/api/dashboard/summary', authenticateToken, async (req, res) => {
+app.put('/api/missions/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    const { name, description, status } = req.body;
     try {
         if (usePostgres) {
-            const total = (await sql`SELECT COUNT(*) as count FROM equipment`).rows[0].count;
-            const statusCounts = (await sql`SELECT status, COUNT(*) as count FROM equipment GROUP BY status`).rows;
-            res.json({ message: "success", data: { 
-                totalEquipment: parseInt(total) || 0, 
-                statusCounts: statusCounts.map(s => ({ ...s, count: parseInt(s.count) }))
-            } });
+            await sql`UPDATE missions SET name = ${name}, description = ${description}, status = ${status} WHERE id = ${id}`;
         } else {
-            dbSQLite.get('SELECT COUNT(*) as totalEquipment FROM equipment', (err, total) => {
-                dbSQLite.all('SELECT status, COUNT(*) as count FROM equipment GROUP BY status', [], (err, statusCounts) => {
-                    res.json({ message: "success", data: { totalEquipment: total ? total.totalEquipment : 0, statusCounts: statusCounts || [] } });
-                });
-            });
+            await new Promise((res, rej) => dbSQLite.run('UPDATE missions SET name = ?, description = ?, status = ? WHERE id = ?', [name, description, status, id], (err) => err ? rej(err) : res()));
         }
+        res.json({ message: "Mission mise à jour avec succès" });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.delete('/api/missions/:id', authenticateToken, authorizeRole('administrateur'), async (req, res) => {
+    const { id } = req.params;
+    try {
+        if (usePostgres) {
+            await sql`DELETE FROM missions WHERE id = ${id}`;
+        } else {
+            await new Promise((res, rej) => dbSQLite.run('DELETE FROM missions WHERE id = ?', [id], (err) => err ? rej(err) : res()));
+        }
+        res.json({ message: "Mission supprimée avec succès" });
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
@@ -344,3 +461,10 @@ app.delete('/api/users/:id', authenticateToken, authorizeRole('administrateur'),
 });
 
 module.exports = app;
+
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+}
+
