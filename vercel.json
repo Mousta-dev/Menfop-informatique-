@@ -1,4 +1,5 @@
 {
+  "outputDirectory": "client/build",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "server/index.js" },
     { "source": "/(.*)", "destination": "/index.html" }
