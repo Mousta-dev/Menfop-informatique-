@@ -385,6 +385,25 @@ app.delete('/api/missions/:id', authenticateToken, authorizeRole('administrateur
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
+app.get('/api/dashboard/summary', authenticateToken, async (req, res) => {
+    try {
+        if (usePostgres) {
+            const total = (await sql`SELECT COUNT(*) as count FROM equipment`).rows[0].count;
+            const statusCounts = (await sql`SELECT status, COUNT(*) as count FROM equipment GROUP BY status`).rows;
+            res.json({ message: "success", data: { 
+                totalEquipment: parseInt(total) || 0, 
+                statusCounts: statusCounts.map(s => ({ ...s, count: parseInt(s.count) }))
+            } });
+        } else {
+            dbSQLite.get('SELECT COUNT(*) as totalEquipment FROM equipment', (err, total) => {
+                dbSQLite.all('SELECT status, COUNT(*) as count FROM equipment GROUP BY status', [], (err, statusCounts) => {
+                    res.json({ message: "success", data: { totalEquipment: total ? total.totalEquipment : 0, statusCounts: statusCounts || [] } });
+                });
+            });
+        }
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
 app.get('/api/dashboard/equipment-by-establishment', authenticateToken, async (req, res) => {
     try {
         let rows;
