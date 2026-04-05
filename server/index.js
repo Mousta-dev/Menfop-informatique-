@@ -40,6 +40,7 @@ const ensureTables = async () => {
             if (existingAdmin.rows.length === 0) {
                 const hash = await bcrypt.hash('Mousta@2025', 10);
                 await sql`INSERT INTO users (username, password, role) VALUES ('Alpha', ${hash}, 'administrateur')`;
+                console.log('Seed: Admin Alpha created in Postgres.');
             }
         } catch (err) {
             console.error('Postgres init error:', err);
