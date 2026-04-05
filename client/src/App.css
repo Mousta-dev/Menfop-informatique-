@@ -17,7 +17,18 @@ body {
 }
 
 /* Sidebar Styling - Compact */
-.app-container { display: flex; min-height: 100vh; }
+.app-container { 
+  display: flex; 
+  min-height: 100vh; 
+  flex-direction: row;
+}
+
+@media (max-width: 992px) {
+  .app-container {
+    flex-direction: column;
+  }
+}
+
 .sidebar {
   width: 220px;
   background: white;
@@ -25,6 +36,8 @@ body {
   display: flex;
   flex-direction: column;
   position: fixed;
+  top: 0;
+  left: 0;
   height: 100vh;
   z-index: 1000;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.02);
@@ -209,10 +222,16 @@ h2 { font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: 600; }
     justify-content: space-between;
     padding: 0.5rem 0.75rem;
     background: white;
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 999;
     border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+    height: 60px;
+  }
+  .main-content {
+    margin-top: 60px;
   }
 }
 @media (max-width: 768px) {
