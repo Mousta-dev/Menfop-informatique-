@@ -305,4 +305,41 @@ app.post('/api/users', authenticateToken, authorizeRole('administrateur'), async
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
+app.put('/api/users/:id', authenticateToken, authorizeRole('administrateur'), async (req, res) => {
+    const { id } = req.params;
+    const { username, password, role } = req.body;
+    try {
+        let query;
+        let params = [];
+        
+        if (password) {
+            const hash = await bcrypt.hash(password, 10);
+            if (usePostgres) {
+                await sql`UPDATE users SET username = ${username}, password = ${hash}, role = ${role} WHERE id = ${id}`;
+            } else {
+                await new Promise((res, rej) => dbSQLite.run('UPDATE users SET username = ?, password = ?, role = ? WHERE id = ?', [username, hash, role, id], (err) => err ? rej(err) : res()));
+            }
+        } else {
+            if (usePostgres) {
+                await sql`UPDATE users SET username = ${username}, role = ${role} WHERE id = ${id}`;
+            } else {
+                await new Promise((res, rej) => dbSQLite.run('UPDATE users SET username = ?, role = ? WHERE id = ?', [username, role, id], (err) => err ? rej(err) : res()));
+            }
+        }
+        res.json({ message: "Utilisateur mis à jour avec succès" });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.delete('/api/users/:id', authenticateToken, authorizeRole('administrateur'), async (req, res) => {
+    const { id } = req.params;
+    try {
+        if (usePostgres) {
+            await sql`DELETE FROM users WHERE id = ${id}`;
+        } else {
+            await new Promise((res, rej) => dbSQLite.run('DELETE FROM users WHERE id = ?', [id], (err) => err ? rej(err) : res()));
+        }
+        res.json({ message: "Utilisateur supprimé avec succès" });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
 module.exports = app;
