@@ -26,14 +26,20 @@ if (!usePostgres) {
 }
 
 // Ensure database tables exist before any request
+let tablesEnsured = false;
 const ensureTables = async () => {
+    if (tablesEnsured) return;
+    
     if (usePostgres) {
         try {
-            await sql`CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL, role TEXT DEFAULT 'utilisateur')`;
-            await sql`CREATE TABLE IF NOT EXISTS establishments (id SERIAL PRIMARY KEY, name TEXT NOT NULL UNIQUE)`;
-            await sql`CREATE TABLE IF NOT EXISTS equipment (id SERIAL PRIMARY KEY, name TEXT NOT NULL, status TEXT NOT NULL, establishment_id INTEGER REFERENCES establishments(id))`;
-            await sql`CREATE TABLE IF NOT EXISTS reports (id SERIAL PRIMARY KEY, content TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`;
-            await sql`CREATE TABLE IF NOT EXISTS missions (id SERIAL PRIMARY KEY, name TEXT NOT NULL, description TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`;
+            // Run all table creations in one go if possible, or at least check once
+            await sql`
+                CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL, role TEXT DEFAULT 'utilisateur');
+                CREATE TABLE IF NOT EXISTS establishments (id SERIAL PRIMARY KEY, name TEXT NOT NULL UNIQUE);
+                CREATE TABLE IF NOT EXISTS equipment (id SERIAL PRIMARY KEY, name TEXT NOT NULL, status TEXT NOT NULL, establishment_id INTEGER REFERENCES establishments(id));
+                CREATE TABLE IF NOT EXISTS reports (id SERIAL PRIMARY KEY, content TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+                CREATE TABLE IF NOT EXISTS missions (id SERIAL PRIMARY KEY, name TEXT NOT NULL, description TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+            `;
             
             // Seed Admin Alpha if not exists
             const existingAdmin = await sql`SELECT * FROM users WHERE username = 'Alpha'`;
@@ -42,19 +48,34 @@ const ensureTables = async () => {
                 await sql`INSERT INTO users (username, password, role) VALUES ('Alpha', ${hash}, 'administrateur')`;
                 console.log('Seed: Admin Alpha created in Postgres.');
             }
+            tablesEnsured = true;
         } catch (err) {
             console.error('Postgres init error:', err);
+            // Don't set tablesEnsured = true so it retries on next request if it failed
         }
     } else {
-        dbSQLite.serialize(() => {
-            dbSQLite.run(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL, role TEXT DEFAULT 'utilisateur')`);
-            dbSQLite.run(`CREATE TABLE IF NOT EXISTS establishments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE)`);
-            dbSQLite.run(`CREATE TABLE IF NOT EXISTS equipment (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, status TEXT NOT NULL, establishment_id INTEGER, FOREIGN KEY (establishment_id) REFERENCES establishments(id))`);
-            dbSQLite.run(`CREATE TABLE IF NOT EXISTS reports (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
-            dbSQLite.run(`CREATE TABLE IF NOT EXISTS missions (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, description TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
-            
-            bcrypt.hash('Mousta@2025', 10, (err, hash) => {
-                if (!err) dbSQLite.run('INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)', ['Alpha', hash, 'administrateur']);
+        return new Promise((resolve, reject) => {
+            dbSQLite.serialize(() => {
+                dbSQLite.run(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL, role TEXT DEFAULT 'utilisateur')`);
+                dbSQLite.run(`CREATE TABLE IF NOT EXISTS establishments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE)`);
+                dbSQLite.run(`CREATE TABLE IF NOT EXISTS equipment (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, status TEXT NOT NULL, establishment_id INTEGER, FOREIGN KEY (establishment_id) REFERENCES establishments(id))`);
+                dbSQLite.run(`CREATE TABLE IF NOT EXISTS reports (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+                dbSQLite.run(`CREATE TABLE IF NOT EXISTS missions (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, description TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+                
+                dbSQLite.get('SELECT * FROM users WHERE username = ?', ['Alpha'], (err, row) => {
+                    if (!err && !row) {
+                        bcrypt.hash('Mousta@2025', 10, (err, hash) => {
+                            if (!err) dbSQLite.run('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', ['Alpha', hash, 'administrateur'], () => {
+                                tablesEnsured = true;
+                                resolve();
+                            });
+                            else resolve();
+                        });
+                    } else {
+                        tablesEnsured = true;
+                        resolve();
+                    }
+                });
             });
         });
     }
@@ -62,6 +83,7 @@ const ensureTables = async () => {
 
 // --- Middleware to ensure tables are ready ---
 app.use(async (req, res, next) => {
+    if (tablesEnsured) return next();
     try {
         await ensureTables();
         next();
@@ -96,17 +118,17 @@ app.post('/api/login', async (req, res) => {
     try {
         let user;
         if (usePostgres) {
-            const result = await sql`SELECT * FROM users WHERE username = ${username}`;
+            const result = await sql`SELECT * FROM users WHERE LOWER(username) = LOWER(${username})`;
             user = result.rows[0];
         } else {
-            user = await new Promise((res, rej) => dbSQLite.get('SELECT * FROM users WHERE username = ?', [username], (err, r) => err ? rej(err) : res(r)));
+            user = await new Promise((res, rej) => dbSQLite.get('SELECT * FROM users WHERE LOWER(username) = LOWER(?)', [username], (err, r) => err ? rej(err) : res(r)));
         }
 
         if (!user) return res.json({ success: false, message: 'Identifiants invalides' });
         
         const valid = await bcrypt.compare(password, user.password);
         if (valid) {
-            const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '1h' });
+            const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '7d' });
             res.json({ success: true, token, role: user.role });
         } else {
             res.json({ success: false, message: 'Identifiants invalides' });

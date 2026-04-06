@@ -20,8 +20,8 @@ import './App.css';
 
 const AppContent = () => {
   const { t, i18n } = useTranslation();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
+  const [userRole, setUserRole] = useState(localStorage.getItem('role'));
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const location = useLocation();
 
@@ -121,7 +121,7 @@ const AppContent = () => {
     </>
   );
 
-  if (location.pathname === '/login') {
+  if (location.pathname === '/login' && !isAuthenticated) {
     return (
       <Routes>
         <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} setUserRole={setUserRole} />} />
