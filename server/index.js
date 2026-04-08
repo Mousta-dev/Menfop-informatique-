@@ -114,7 +114,9 @@ const authorizeRole = (role) => {
 // --- API Routes ---
 
 app.post('/api/login', async (req, res) => {
-    const { username, password } = req.body;
+    let { username, password } = req.body;
+    if (username) username = username.trim();
+    if (password) password = password.trim();
     try {
         let user;
         if (usePostgres) {
@@ -449,7 +451,9 @@ app.get('/api/users', authenticateToken, authorizeRole('administrateur'), async 
 });
 
 app.post('/api/users', authenticateToken, authorizeRole('administrateur'), async (req, res) => {
-    const { username, password, role } = req.body;
+    let { username, password, role } = req.body;
+    if (username) username = username.trim();
+    if (password) password = password.trim();
     try {
         const hash = await bcrypt.hash(password, 10);
         if (usePostgres) {
@@ -466,7 +470,9 @@ app.post('/api/users', authenticateToken, authorizeRole('administrateur'), async
 
 app.put('/api/users/:id', authenticateToken, authorizeRole('administrateur'), async (req, res) => {
     const { id } = req.params;
-    const { username, password, role } = req.body;
+    let { username, password, role } = req.body;
+    if (username) username = username.trim();
+    if (password) password = password.trim();
     try {
         let query;
         let params = [];

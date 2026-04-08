@@ -14,7 +14,12 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/login', { username, password });
+      const trimmedUsername = username.trim();
+      const trimmedPassword = password.trim();
+      const response = await axios.post('/api/login', { 
+        username: trimmedUsername, 
+        password: trimmedPassword 
+      });
       if (response.data.success) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('role', response.data.role);

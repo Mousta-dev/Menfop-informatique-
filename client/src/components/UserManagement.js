@@ -40,12 +40,20 @@ const UserManagement = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
-    if (!newUsername.trim() || !newPassword.trim()) {
+    const trimmedUsername = newUsername.trim();
+    const trimmedPassword = newPassword.trim();
+    const trimmedRole = newRole.trim();
+
+    if (!trimmedUsername || !trimmedPassword) {
       setError("Le nom d'utilisateur et le mot de passe sont requis.");
       return;
     }
     try {
-      await api.post('/users', { username: newUsername, password: newPassword, role: newRole });
+      await api.post('/users', { 
+        username: trimmedUsername, 
+        password: trimmedPassword, 
+        role: trimmedRole 
+      });
       setSuccess('Utilisateur ajouté avec succès !');
       setNewUsername('');
       setNewPassword('');
@@ -101,8 +109,13 @@ const UserManagement = () => {
   const handleSaveEdit = async (e) => {
     e.preventDefault();
     try {
-      const updateData = { username: editedUsername, role: editedRole };
-      if (editedPassword) updateData.password = editedPassword;
+      const trimmedUsername = editedUsername.trim();
+      const trimmedRole = editedRole.trim();
+      const updateData = { username: trimmedUsername, role: trimmedRole };
+      
+      if (editedPassword && editedPassword.trim()) {
+        updateData.password = editedPassword.trim();
+      }
 
       await api.put(`/users/${currentUser.id}`, updateData);
       setSuccess('Utilisateur mis à jour !');
