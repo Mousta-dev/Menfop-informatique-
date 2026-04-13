@@ -55,7 +55,8 @@ i18n
             success_delete: 'Supprimé avec succès !',
             success_update: 'Mis à jour avec succès !',
             error_fetch_equipment: 'Échec de la récupération des équipements.',
-            error_fetch_establishments: 'Échec de la récupération des établissements.'
+            error_fetch_establishments: 'Échec de la récupération des établissements.',
+            print: 'Imprimer'
           }
         }
       },
@@ -102,7 +103,8 @@ i18n
             success_delete: 'Deleted successfully!',
             success_update: 'Updated successfully!',
             error_fetch_equipment: 'Failed to fetch equipment.',
-            error_fetch_establishments: 'Failed to fetch establishments.'
+            error_fetch_establishments: 'Failed to fetch establishments.',
+            print: 'Print'
           }
         }
       }

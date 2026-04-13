@@ -237,3 +237,35 @@ h2 { font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: 600; }
 @media (max-width: 768px) {
   .table-responsive { overflow-x: auto; }
 }
+
+/* Print Styles */
+@media print {
+  .sidebar, 
+  .no-print, 
+  .btn, 
+  .btn-sm, 
+  .modal, 
+  .alert,
+  .input-group,
+  .form-select,
+  .card-header .btn,
+  .mobile-header {
+    display: none !important;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+    margin-top: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #eee !important;
+  }
+
+  body {
+    background-color: white !important;
+  }
+}

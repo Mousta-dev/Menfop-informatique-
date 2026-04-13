@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Alert, Button } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { useParams } from 'react-router-dom';
 
 const ReportView = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const [report, setReport] = useState(null);
   const [error, setError] = useState('');
@@ -40,7 +42,12 @@ const ReportView = () => {
 
   return (
     <div>
-      <h1>Rapport #{report.id}</h1>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1 className="mb-0">Rapport #{report.id}</h1>
+        <Button variant="outline-primary" onClick={() => window.print()}>
+          🖨️ {t('common.print') || 'Imprimer'}
+        </Button>
+      </div>
       <Card className="mb-3">
         <Card.Body>
           <Card.Title>Contenu du Rapport</Card.Title>
@@ -53,7 +60,7 @@ const ReportView = () => {
         </Card.Body>
       </Card>
 
-      <Card>
+      <Card className="no-print">
         <Card.Body>
           <Card.Title>Partager ce Rapport</Card.Title>
           <Alert variant="secondary">

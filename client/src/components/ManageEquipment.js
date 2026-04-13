@@ -119,7 +119,12 @@ const ManageEquipment = ({ userRole }) => {
 
   return (
     <div className="py-2">
-      <h1 className="mb-4">{t('sidebar.manage_equipment')}</h1>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1 className="mb-0">{t('sidebar.manage_equipment')}</h1>
+        <Button variant="outline-primary" onClick={() => window.print()}>
+          🖨️ {t('common.print') || 'Imprimer'}
+        </Button>
+      </div>
 
       {/* Stats Overview */}
       <Row className="mb-4 g-3">
@@ -161,7 +166,7 @@ const ManageEquipment = ({ userRole }) => {
       {success && <Alert variant="success" onClose={() => setSuccess('')} dismissible>{success}</Alert>}
 
       {/* Filters Bar */}
-      <Card className="mb-4 border-0 shadow-sm">
+      <Card className="mb-4 border-0 shadow-sm no-print">
         <Card.Body className="p-3">
           <Row className="g-3">
             <Col lg={4}>
