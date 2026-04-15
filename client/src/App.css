@@ -234,8 +234,21 @@ h2 { font-size: 1.1rem; margin-bottom: 0.5rem; font-weight: 600; }
     margin-top: 60px;
   }
 }
-@media (max-width: 768px) {
-  .table-responsive { overflow-x: auto; }
+/* Login Wrapper and Language Switcher */
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-color);
+}
+
+.login-lang-switcher {
+  padding: 1rem;
+  display: flex;
+  justify-content: flex-end;
+  max-width: 400px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* Print Styles */

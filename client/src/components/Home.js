@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Alert } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { Pie, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
@@ -9,6 +10,7 @@ import { Form } from 'react-bootstrap';
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
 const Home = () => {
+  const { t } = useTranslation();
   const [summaryData, setSummaryData] = useState({ totalEquipment: 0, statusCounts: [] });
   const [equipmentByEstablishment, setEquipmentByEstablishment] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,7 +30,7 @@ const Home = () => {
 
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
-      setError('Failed to load dashboard data.');
+      setError(t('common.error_loading_data') || 'Failed to load dashboard data.');
     }
   };
 
@@ -38,7 +40,13 @@ const Home = () => {
 
   // Prepare data for Pie chart (Equipment by Status)
   const pieChartData = {
-    labels: summaryData.statusCounts.map(item => item.status),
+    labels: summaryData.statusCounts.map(item => {
+      // Translate status labels for the chart
+      if (item.status === 'functional') return t('common.functional');
+      if (item.status === 'damaged') return t('common.damaged');
+      if (item.status === 'new') return t('common.new');
+      return item.status;
+    }),
     datasets: [
       {
         data: summaryData.statusCounts.map(item => item.count),
@@ -53,7 +61,7 @@ const Home = () => {
     labels: equipmentByEstablishment.map(item => item.establishment_name),
     datasets: [
       {
-        label: 'Equipment Count',
+        label: t('dashboard.count'),
         data: equipmentByEstablishment.map(item => item.equipmentCount),
         backgroundColor: 'rgba(75, 192, 192, 0.6)',
         borderColor: 'rgba(75, 192, 192, 1)',
@@ -67,7 +75,7 @@ const Home = () => {
     plugins: {
       title: {
         display: true,
-        text: 'Equipment Count by Establishment',
+        text: t('dashboard.per_establishment'),
       },
       legend: {
         position: 'top',
@@ -78,13 +86,13 @@ const Home = () => {
         beginAtZero: true,
         title: {
           display: true,
-          text: 'Number of Equipment',
+          text: t('dashboard.count'),
         },
       },
       x: {
         title: {
           display: true,
-          text: 'Establishment',
+          text: t('sidebar.establishments'),
         },
       },
     },
@@ -93,10 +101,10 @@ const Home = () => {
   return (
     <Container className="mt-4">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h1>Dashboard Overview</h1>
+        <h1>{t('dashboard.overview')}</h1>
         <Form.Control
           type="text"
-          placeholder="Rechercher un établissement..."
+          placeholder={t('dashboard.search_establishment')}
           style={{ width: '300px' }}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -108,7 +116,7 @@ const Home = () => {
         <Col xs={12} md={6} className="mb-3 mb-md-0">
           <Card className="h-100">
             <Card.Body>
-              <Card.Title>Total Equipment</Card.Title>
+              <Card.Title>{t('dashboard.total_equipment')}</Card.Title>
               <Card.Text className="fs-1 text-center py-4">{summaryData.totalEquipment}</Card.Text>
             </Card.Body>
           </Card>
@@ -116,19 +124,23 @@ const Home = () => {
         <Col xs={12} md={6}>
           <Card className="h-100">
             <Card.Body>
-              <Card.Title>Equipment by Status</Card.Title>
+              <Card.Title>{t('dashboard.by_status')}</Card.Title>
               <div className="table-responsive">
                 <Table striped bordered hover size="sm" className="mb-0">
                   <thead>
                     <tr>
-                      <th>Status</th>
-                      <th>Count</th>
+                      <th>{t('common.status')}</th>
+                      <th>{t('dashboard.count')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {summaryData.statusCounts.map((item, index) => (
                       <tr key={index}>
-                        <td>{item.status}</td>
+                        <td>{
+                          item.status === 'functional' ? t('common.functional') :
+                          item.status === 'damaged' ? t('common.damaged') :
+                          item.status === 'new' ? t('common.new') : item.status
+                        }</td>
                         <td>{item.count}</td>
                       </tr>
                     ))}
@@ -144,7 +156,7 @@ const Home = () => {
         <Col xs={12} lg={6} className="mb-4">
           <Card className="h-100">
             <Card.Body>
-              <Card.Title>Equipment Status Distribution</Card.Title>
+              <Card.Title>{t('dashboard.status_distribution')}</Card.Title>
               <div style={{ position: 'relative', height: '300px', width: '100%' }}>
                 <Pie data={pieChartData} options={{ maintainAspectRatio: false }} />
               </div>
@@ -154,7 +166,7 @@ const Home = () => {
         <Col xs={12} lg={6} className="mb-4">
           <Card className="h-100">
             <Card.Body>
-              <Card.Title>Equipment per Establishment</Card.Title>
+              <Card.Title>{t('dashboard.per_establishment')}</Card.Title>
               <div style={{ position: 'relative', height: '300px', width: '100%' }}>
                 <Bar data={barChartData} options={{ ...barChartOptions, maintainAspectRatio: false }} />
               </div>
@@ -167,13 +179,13 @@ const Home = () => {
         <Col xs={12}>
           <Card>
             <Card.Body>
-              <Card.Title>Equipment Count by Establishment (Table)</Card.Title>
+              <Card.Title>{t('dashboard.table_view')}</Card.Title>
               <div className="table-responsive">
                 <Table striped bordered hover size="sm">
                   <thead>
                     <tr>
-                      <th>Establishment</th>
-                      <th>Equipment Count</th>
+                      <th>{t('sidebar.establishments')}</th>
+                      <th>{t('dashboard.count')}</th>
                     </tr>
                   </thead>
                   <tbody>

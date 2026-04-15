@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Form, Alert, Modal } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import api from '../api';
 
 const Establishments = ({ userRole }) => {
+  const { t } = useTranslation();
   const [establishments, setEstablishments] = useState([]);
   const [newEstablishmentName, setNewEstablishmentName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,7 +25,7 @@ const Establishments = ({ userRole }) => {
       setEstablishments(response.data.data);
     } catch (err) {
       console.error('Error fetching establishments:', err);
-      setError('Failed to fetch establishments.');
+      setError(t('common.error_fetch_establishments'));
     }
   };
 
@@ -36,39 +38,38 @@ const Establishments = ({ userRole }) => {
     setError('');
     setSuccess('');
     if (!newEstablishmentName.trim()) {
-      setError('Establishment name cannot be empty.');
+      setError(t('establishments.error_empty'));
       return;
     }
     try {
       await api.post('/establishments', { name: newEstablishmentName });
-      setSuccess('Établissement ajouté avec succès !');
+      setSuccess(t('establishments.success_add'));
       setNewEstablishmentName('');
       fetchEstablishments(); // Refresh the list
     } catch (err) {
       console.error('Error adding establishment:', err);
       const serverError = err.response?.data?.error || err.response?.data?.message;
-      setError(`Échec de l'ajout : ${serverError || err.message}`);
+      setError(`${t('establishments.error_add')} : ${serverError || err.message}`);
     }
   };
 
   const handleDelete = async (id) => {
     setError('');
     setSuccess('');
-    if (window.confirm('Are you sure you want to delete this establishment?')) {
+    if (window.confirm(t('establishments.delete_confirm'))) {
       try {
         await api.delete(`/establishments/${id}`);
-        setSuccess('Établissement supprimé avec succès !');
+        setSuccess(t('establishments.success_delete'));
         fetchEstablishments(); // Refresh the list
       } catch (err) {
         console.error('Error deleting establishment:', err);
         const serverError = err.response?.data?.error || err.response?.data?.message;
-        setError(`Échec de la suppression : ${serverError || err.message}`);
+        setError(`${t('establishments.error_delete')} : ${serverError || err.message}`);
       }
     }
   };
 
   const handleEdit = (establishment) => {
-    console.log('Editing establishment:', establishment);
     setCurrentEstablishment(establishment);
     setEditedEstablishmentName(establishment.name);
     setShowEditModal(true);
@@ -86,78 +87,75 @@ const Establishments = ({ userRole }) => {
     setError('');
     setSuccess('');
     if (!editedEstablishmentName.trim()) {
-      setError('Establishment name cannot be empty.');
+      setError(t('establishments.error_empty'));
       return;
     }
     
     if (!currentEstablishment || !currentEstablishment.id) {
-      setError('Erreur interne : Établissement non sélectionné.');
+      setError(t('common.error'));
       return;
     }
 
     try {
       const url = `/establishments/${currentEstablishment.id}`;
-      console.log(`Updating establishment at ${url} with name: ${editedEstablishmentName}`);
-      const response = await api.put(url, { name: editedEstablishmentName });
-      console.log('Update response:', response.data);
-      
-      setSuccess('Établissement mis à jour avec succès !');
+      await api.put(url, { name: editedEstablishmentName });
+      setSuccess(t('establishments.success_update'));
       handleCloseEditModal();
       fetchEstablishments(); // Refresh the list
     } catch (err) {
       console.error('Error updating establishment:', err);
       const serverError = err.response?.data?.error || err.response?.data?.message;
-      setError(`Échec de la mise à jour : ${serverError || err.message}`);
+      setError(`${t('establishments.error_update')} : ${serverError || err.message}`);
     }
   };
 
   return (
     <div>
-      <h1>Establishments</h1>
+      <h1>{t('establishments.title')}</h1>
 
-      {error && <Alert variant="danger">{error}</Alert>}
-      {success && <Alert variant="success">{success}</Alert>}
+      {error && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
+      {success && <Alert variant="success" onClose={() => setSuccess('')} dismissible>{success}</Alert>}
 
       <Form onSubmit={handleAddEstablishment} className="mb-4">
         <Form.Group className="mb-3">
-          <Form.Label>Add New Establishment</Form.Label>
+          <Form.Label>{t('establishments.add_new')}</Form.Label>
           <Form.Control
             type="text"
-            placeholder="Enter establishment name"
+            placeholder={t('establishments.enter_name')}
             value={newEstablishmentName}
             onChange={(e) => setNewEstablishmentName(e.target.value)}
           />
         </Form.Group>
         <Button variant="primary" type="submit" className="px-3 btn-ajouter">
-          <span className="me-2">➕</span> Ajouter un établissement
+          <span className="me-2">➕</span> {t('establishments.add_button')}
         </Button>
       </Form>
 
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2>Établissements Actuels</h2>
+        <h2>{t('establishments.current')}</h2>
         <div className="d-flex gap-2" style={{ width: '400px' }}>
             <Form.Control
             type="text"
-            placeholder="Rechercher un établissement..."
+            placeholder={t('dashboard.search_establishment')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             />
             {searchTerm && (
                 <Button variant="outline-secondary" onClick={() => setSearchTerm('')}>
-                    Effacer
+                    {t('establishments.clear')}
                 </Button>
             )}
         </div>
       </div>
       {filteredEstablishments.length === 0 ? (
-        <p>Aucun établissement trouvé.</p>
+        <p>{t('establishments.no_found')}</p>
       ) : (
         <Table striped bordered hover>
           <thead>
             <tr>
               <th>ID</th>
-              <th>Nom</th>
-              <th className="text-center">Actions</th>
+              <th>{t('common.name')}</th>
+              <th className="text-center">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -166,11 +164,11 @@ const Establishments = ({ userRole }) => {
                 <td>{establishment.id}</td>
                 <td>{establishment.name}</td>
                 <td className="text-center">
-                  <Button variant="warning" size="sm" className="me-2 btn-modifier" onClick={() => handleEdit(establishment)} title="Modifier">
+                  <Button variant="warning" size="sm" className="me-2 btn-modifier" onClick={() => handleEdit(establishment)} title={t('common.edit')}>
                     ✏️
                   </Button>
                   {userRole === 'administrateur' && (
-                    <Button variant="danger" size="sm" className="btn-supprimer" onClick={() => handleDelete(establishment.id)} title="Supprimer">
+                    <Button variant="danger" size="sm" className="btn-supprimer" onClick={() => handleDelete(establishment.id)} title={t('common.delete')}>
                       🗑️
                     </Button>
                   )}
@@ -184,13 +182,13 @@ const Establishments = ({ userRole }) => {
       {/* Edit Establishment Modal */}
       <Modal show={showEditModal} onHide={handleCloseEditModal}>
         <Modal.Header closeButton>
-          <Modal.Title>Modifier l'Établissement</Modal.Title>
+          <Modal.Title>{t('establishments.edit_title')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {error && <Alert variant="danger">{error}</Alert>}
           <Form onSubmit={handleSaveEdit}>
             <Form.Group className="mb-3">
-              <Form.Label>Nom de l'établissement</Form.Label>
+              <Form.Label>{t('establishments.name_label')}</Form.Label>
               <Form.Control
                 type="text"
                 value={editedEstablishmentName}
@@ -198,7 +196,7 @@ const Establishments = ({ userRole }) => {
               />
             </Form.Group>
             <Button variant="primary" type="submit">
-              Enregistrer les modifications
+              {t('establishments.save_changes')}
             </Button>
           </Form>
         </Modal.Body>

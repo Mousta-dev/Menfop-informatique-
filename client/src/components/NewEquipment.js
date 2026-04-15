@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Form, Button, Alert, Card } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import api from '../api';
 
 const NewEquipment = () => {
+  const { t } = useTranslation();
   const [equipmentName, setEquipmentName] = useState('');
   const [selectedEstablishment, setSelectedEstablishment] = useState('');
   const [establishments, setEstablishments] = useState([]);
@@ -24,7 +26,7 @@ const NewEquipment = () => {
       }
     } catch (err) {
       console.error('Error fetching establishments:', err);
-      setError('Échec du chargement des établissements.');
+      setError(t('common.error_fetch_establishments'));
     }
   };
 
@@ -54,7 +56,7 @@ const NewEquipment = () => {
     setSuccess('');
     
     if (!equipmentName.trim() || !selectedEstablishment) {
-      setError('Veuillez remplir tous les champs (assurez-vous qu\'un établissement est sélectionné).');
+      setError(t('equipment.error_fill_all'));
       return;
     }
 
@@ -64,17 +66,17 @@ const NewEquipment = () => {
         status: 'new',
         establishment_id: parseInt(selectedEstablishment),
       });
-      setSuccess('Nouvel équipement ajouté avec succès !');
+      setSuccess(t('equipment.success_add'));
       setEquipmentName('');
     } catch (err) {
       console.error('Error adding new equipment:', err);
-      setError('Échec de l\'ajout du nouvel équipement.');
+      setError(t('equipment.error_add'));
     }
   };
 
   return (
     <div>
-      <h1>Ajouter un nouvel équipement</h1>
+      <h1>{t('equipment.add_new')}</h1>
       
       {error && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
       {success && <Alert variant="success" onClose={() => setSuccess('')} dismissible>{success}</Alert>}
@@ -82,17 +84,17 @@ const NewEquipment = () => {
       <Card className="mb-4">
         <Card.Body>
           <Form.Group className="mb-3">
-            <Form.Label><strong>Rechercher un établissement :</strong></Form.Label>
+            <Form.Label><strong>{t('equipment.search_establishment')}</strong></Form.Label>
             <div className="d-flex gap-2">
                 <Form.Control
                 type="text"
-                placeholder="Filtrer la liste des établissements..."
+                placeholder={t('equipment.filter_placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 />
                 {searchTerm && (
                     <Button variant="outline-secondary" onClick={() => setSearchTerm('')}>
-                        Effacer
+                        {t('establishments.clear')}
                     </Button>
                 )}
             </div>
@@ -102,10 +104,10 @@ const NewEquipment = () => {
 
       <Form onSubmit={handleSubmit}>
         <Form.Group className="mb-3">
-          <Form.Label>Nom de l'équipement</Form.Label>
+          <Form.Label>{t('equipment.name')}</Form.Label>
           <Form.Control
             type="text"
-            placeholder="Entrez le nom de l'équipement"
+            placeholder={t('equipment.enter_name')}
             value={equipmentName}
             onChange={(e) => setEquipmentName(e.target.value)}
           />
@@ -113,14 +115,14 @@ const NewEquipment = () => {
 
         <Form.Group className="mb-3">
           <Form.Label>
-            {searchTerm.trim() ? `Établissement (Filtré par "${searchTerm}")` : "Établissement"}
+            {searchTerm.trim() ? `${t('sidebar.establishments')} (${t('common.search')} "${searchTerm}")` : t('sidebar.establishments')}
           </Form.Label>
           <Form.Select
             value={selectedEstablishment}
             onChange={(e) => setSelectedEstablishment(e.target.value)}
           >
             {filteredEstablishments.length === 0 ? (
-                <option value="">Aucun établissement trouvé</option>
+                <option value="">{t('establishments.no_found')}</option>
             ) : (
                 filteredEstablishments.map((establishment) => (
                     <option key={establishment.id} value={String(establishment.id)}>
@@ -132,7 +134,7 @@ const NewEquipment = () => {
         </Form.Group>
 
         <Button variant="primary" type="submit" disabled={!selectedEstablishment || !equipmentName.trim()}>
-          Ajouter l'équipement
+          {t('equipment.add_button')}
         </Button>
       </Form>
     </div>

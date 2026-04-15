@@ -139,7 +139,7 @@ const ManageEquipment = ({ userRole }) => {
         <Col md={3}>
           <Card className="text-center border-0 shadow-sm h-100">
             <Card.Body className="py-3">
-              <div className="text-muted small mb-1">Fonctionnel</div>
+              <div className="text-muted small mb-1">{t('common.functional')}</div>
               <h3 className="mb-0 text-success">{stats.functional}</h3>
             </Card.Body>
           </Card>
@@ -147,7 +147,7 @@ const ManageEquipment = ({ userRole }) => {
         <Col md={3}>
           <Card className="text-center border-0 shadow-sm h-100">
             <Card.Body className="py-3">
-              <div className="text-muted small mb-1">Endommagé</div>
+              <div className="text-muted small mb-1">{t('common.damaged')}</div>
               <h3 className="mb-0 text-danger">{stats.damaged}</h3>
             </Card.Body>
           </Card>
@@ -155,7 +155,7 @@ const ManageEquipment = ({ userRole }) => {
         <Col md={3}>
           <Card className="text-center border-0 shadow-sm h-100">
             <Card.Body className="py-3">
-              <div className="text-muted small mb-1">Nouveau</div>
+              <div className="text-muted small mb-1">{t('common.new')}</div>
               <h3 className="mb-0 text-info">{stats.new}</h3>
             </Card.Body>
           </Card>
@@ -185,15 +185,15 @@ const ManageEquipment = ({ userRole }) => {
             </Col>
             <Col md={6} lg={4}>
               <Form.Select size="sm" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                <option value="all">Tous les statuts</option>
-                <option value="functional">Fonctionnel</option>
-                <option value="damaged">Endommagé</option>
-                <option value="new">Nouveau</option>
+                <option value="all">{t('equipment.all_statuses')}</option>
+                <option value="functional">{t('common.functional')}</option>
+                <option value="damaged">{t('common.damaged')}</option>
+                <option value="new">{t('common.new')}</option>
               </Form.Select>
             </Col>
             <Col md={6} lg={4}>
               <Form.Select size="sm" value={establishmentFilter} onChange={(e) => setEstablishmentFilter(e.target.value)}>
-                <option value="all">Tous les établissements</option>
+                <option value="all">{t('equipment.all_establishments')}</option>
                 {establishments.map(e => (
                   <option key={e.id} value={e.id}>{e.name}</option>
                 ))}
@@ -212,7 +212,7 @@ const ManageEquipment = ({ userRole }) => {
                 <th className="px-4 py-3 text-muted" style={{ width: '80px' }}>ID</th>
                 <th className="py-3 text-muted">{t('common.name')}</th>
                 <th className="py-3 text-muted">{t('common.status')}</th>
-                <th className="py-3 text-muted">Établissement</th>
+                <th className="py-3 text-muted">{t('establishments.name_label')}</th>
                 <th className="px-4 py-3 text-muted text-end">{t('common.actions')}</th>
               </tr>
             </thead>
@@ -220,7 +220,7 @@ const ManageEquipment = ({ userRole }) => {
               {filteredEquipment.length === 0 ? (
                 <tr>
                   <td colSpan="5" className="text-center py-5 text-muted">
-                    Aucun équipement trouvé.
+                    {t('equipment.no_found')}
                   </td>
                 </tr>
               ) : (
@@ -286,14 +286,14 @@ const ManageEquipment = ({ userRole }) => {
                 onChange={(e) => setEditedStatus(e.target.value)}
                 required
               >
-                <option value="new">Nouveau</option>
-                <option value="functional">Fonctionnel</option>
-                <option value="damaged">Endommagé</option>
+                <option value="new">{t('common.new')}</option>
+                <option value="functional">{t('common.functional')}</option>
+                <option value="damaged">{t('common.damaged')}</option>
               </Form.Select>
             </Form.Group>
 
             <Form.Group className="mb-4">
-              <Form.Label className="small fw-bold">Établissement</Form.Label>
+              <Form.Label className="small fw-bold">{t('establishments.name_label')}</Form.Label>
               <Form.Select
                 value={editedEstablishmentId}
                 onChange={(e) => setEditedEstablishmentId(e.target.value)}
