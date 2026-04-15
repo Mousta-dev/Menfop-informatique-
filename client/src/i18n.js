@@ -95,7 +95,7 @@ i18n
             success_add: 'Établissement ajouté avec succès !',
             success_delete: 'Établissement supprimé avec succès !',
             success_update: 'Établissement mis à jour avec succès !',
-            error_empty: 'Le nom de l'établissement ne peut pas être vide.',
+            error_empty: "Le nom de l'établissement ne peut pas être vide.",
             error_add: "Échec de l'ajout",
             error_delete: 'Échec de la suppression',
             error_update: 'Échec de la mise à jour',
