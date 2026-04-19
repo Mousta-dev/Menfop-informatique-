@@ -39,6 +39,7 @@ const ensureTables = async () => {
                 CREATE TABLE IF NOT EXISTS equipment (id SERIAL PRIMARY KEY, name TEXT NOT NULL, status TEXT NOT NULL, establishment_id INTEGER REFERENCES establishments(id));
                 CREATE TABLE IF NOT EXISTS reports (id SERIAL PRIMARY KEY, content TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
                 CREATE TABLE IF NOT EXISTS missions (id SERIAL PRIMARY KEY, name TEXT NOT NULL, description TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+                CREATE TABLE IF NOT EXISTS interventions (id SERIAL PRIMARY KEY, mission_id INTEGER REFERENCES missions(id) ON DELETE CASCADE, equipment_id INTEGER REFERENCES equipment(id), description TEXT, result TEXT);
             `;
             
             // Seed Admin Alpha if not exists
@@ -61,6 +62,7 @@ const ensureTables = async () => {
                 dbSQLite.run(`CREATE TABLE IF NOT EXISTS equipment (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, status TEXT NOT NULL, establishment_id INTEGER, FOREIGN KEY (establishment_id) REFERENCES establishments(id))`);
                 dbSQLite.run(`CREATE TABLE IF NOT EXISTS reports (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
                 dbSQLite.run(`CREATE TABLE IF NOT EXISTS missions (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, description TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+                dbSQLite.run(`CREATE TABLE IF NOT EXISTS interventions (id INTEGER PRIMARY KEY AUTOINCREMENT, mission_id INTEGER, equipment_id INTEGER, description TEXT, result TEXT, FOREIGN KEY (mission_id) REFERENCES missions(id) ON DELETE CASCADE, FOREIGN KEY (equipment_id) REFERENCES equipment(id))`);
                 
                 dbSQLite.get('SELECT * FROM users WHERE username = ?', ['Alpha'], (err, row) => {
                     if (!err && !row) {
@@ -358,27 +360,64 @@ app.get('/api/missions/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     try {
         let row;
+        let interventions = [];
         if (usePostgres) {
             const result = await sql`SELECT * FROM missions WHERE id = ${id}`;
             row = result.rows[0];
+            if (row) {
+                const intRes = await sql`SELECT i.*, e.name as equipment_name FROM interventions i LEFT JOIN equipment e ON i.equipment_id = e.id WHERE i.mission_id = ${id}`;
+                interventions = intRes.rows;
+            }
         } else {
             row = await new Promise((res, rej) => dbSQLite.get('SELECT * FROM missions WHERE id = ?', [id], (err, r) => err ? rej(err) : res(r)));
+            if (row) {
+                interventions = await new Promise((res, rej) => dbSQLite.all('SELECT i.*, e.name as equipment_name FROM interventions i LEFT JOIN equipment e ON i.equipment_id = e.id WHERE i.mission_id = ?', [id], (err, r) => err ? rej(err) : res(r)));
+            }
         }
-        if (row) res.json({ message: "success", data: row });
+        if (row) {
+            row.interventions = interventions;
+            res.json({ message: "success", data: row });
+        }
         else res.status(404).json({ error: "Mission non trouvée" });
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
 app.post('/api/missions', authenticateToken, async (req, res) => {
-    const { name, description, status } = req.body;
+    const { name, description, status, interventions } = req.body;
     try {
         if (usePostgres) {
             const result = await sql`INSERT INTO missions (name, description, status) VALUES (${name}, ${description}, ${status || 'pending'}) RETURNING id`;
-            res.status(201).json({ message: "success", data: { id: result.rows[0].id, name, description, status: status || 'pending' } });
+            const missionId = result.rows[0].id;
+            
+            if (interventions && Array.isArray(interventions)) {
+                for (const inter of interventions) {
+                    await sql`INSERT INTO interventions (mission_id, equipment_id, description, result) VALUES (${missionId}, ${inter.equipment_id}, ${inter.description}, ${inter.result})`;
+                }
+            }
+            res.status(201).json({ message: "success", data: { id: missionId, name, description, status: status || 'pending' } });
         } else {
-            dbSQLite.run('INSERT INTO missions (name, description, status) VALUES (?, ?, ?)', [name, description, status || 'pending'], function(err) {
-                if (err) return res.status(400).json({ error: err.message });
-                res.status(201).json({ message: "success", data: { id: this.lastID, name, description, status: status || 'pending' } });
+            dbSQLite.serialize(() => {
+                dbSQLite.run('BEGIN TRANSACTION');
+                dbSQLite.run('INSERT INTO missions (name, description, status) VALUES (?, ?, ?)', [name, description, status || 'pending'], function(err) {
+                    if (err) {
+                        dbSQLite.run('ROLLBACK');
+                        return res.status(400).json({ error: err.message });
+                    }
+                    const missionId = this.lastID;
+                    
+                    if (interventions && Array.isArray(interventions)) {
+                        const stmt = dbSQLite.prepare('INSERT INTO interventions (mission_id, equipment_id, description, result) VALUES (?, ?, ?, ?)');
+                        interventions.forEach(inter => {
+                            stmt.run(missionId, inter.equipment_id, inter.description, inter.result);
+                        });
+                        stmt.finalize();
+                    }
+                    
+                    dbSQLite.run('COMMIT', (err) => {
+                        if (err) return res.status(400).json({ error: err.message });
+                        res.status(201).json({ message: "success", data: { id: missionId, name, description, status: status || 'pending' } });
+                    });
+                });
             });
         }
     } catch (err) { res.status(400).json({ error: err.message }); }

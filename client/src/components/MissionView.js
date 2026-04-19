@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Alert, Button, Badge } from 'react-bootstrap';
+import { Card, Alert, Button, Badge, Table } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { missionsApi } from '../api';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -63,9 +63,34 @@ const MissionView = () => {
         </Card.Header>
         <Card.Body>
           <Card.Title className="text-muted mb-3">Description</Card.Title>
-          <p className="border p-4 rounded bg-light" style={{ whiteSpace: 'pre-wrap', minHeight: '150px' }}>
+          <p className="border p-4 rounded bg-light" style={{ whiteSpace: 'pre-wrap', minHeight: '100px' }}>
             {mission.description || 'Aucune description fournie.'}
           </p>
+          
+          <h5 className="mt-4 mb-3">Interventions sur Matériel</h5>
+          {mission.interventions && mission.interventions.length > 0 ? (
+            <Table striped bordered hover responsive>
+              <thead className="bg-light">
+                <tr>
+                  <th>Matériel</th>
+                  <th>Description</th>
+                  <th>Résultat / État</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mission.interventions.map((inter, idx) => (
+                  <tr key={idx}>
+                    <td><strong>{inter.equipment_name || `ID: ${inter.equipment_id}`}</strong></td>
+                    <td>{inter.description}</td>
+                    <td>{inter.result}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          ) : (
+            <p className="text-muted italic">Aucune intervention enregistrée pour cette mission.</p>
+          )}
+
           <hr />
           <div className="d-flex justify-content-between">
             <small className="text-muted">
