@@ -42,32 +42,9 @@ const AppContent = () => {
     setShowMobileMenu(false);
   };
 
-  const changeLanguage = (lng) => {
-    i18n.changeLanguage(lng);
-  };
-
   const PrivateRoute = ({ children }) => {
     return isAuthenticated ? children : <Navigate to="/login" />;
   };
-
-  const LanguageSwitcher = () => (
-    <ButtonGroup size="sm" className="ms-auto">
-      <Button 
-        variant={i18n.language.startsWith('fr') ? 'primary' : 'outline-primary'} 
-        onClick={() => changeLanguage('fr')}
-        style={{ fontSize: '0.7rem', padding: '0.25rem 0.5rem' }}
-      >
-        FR
-      </Button>
-      <Button 
-        variant={i18n.language.startsWith('en') ? 'primary' : 'outline-primary'} 
-        onClick={() => changeLanguage('en')}
-        style={{ fontSize: '0.7rem', padding: '0.25rem 0.5rem' }}
-      >
-        EN
-      </Button>
-    </ButtonGroup>
-  );
 
   const SidebarContent = () => (
     <>
@@ -77,9 +54,6 @@ const AppContent = () => {
             <img src="/menfop.png" alt="Logo" className="sidebar-logo" />
             <span className="navbar-brand mb-0 h1">Menfop-infos</span>
           </Link>
-        </div>
-        <div className="mb-2 w-100">
-          <LanguageSwitcher />
         </div>
       </div>
       <div className="sidebar-content">
@@ -130,9 +104,6 @@ const AppContent = () => {
   if (location.pathname === '/login' && !isAuthenticated) {
     return (
       <div className="login-wrapper">
-        <div className="login-lang-switcher">
-          <LanguageSwitcher />
-        </div>
         <Routes>
           <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} setUserRole={setUserRole} />} />
           <Route path="*" element={<Navigate to="/login" />} />
