@@ -16,7 +16,7 @@ i18n
         translation: {
           sidebar: {
             dashboard: 'Tableau de bord',
-            establishments: 'Établissements',
+            establishments: 'Établissement et service MENFOP',
             manage_equipment: 'Gérer Équipement',
             new_equipment: 'Nouveau Matériel',
             damaged_equipment: 'Matériel Endommagé',
@@ -33,7 +33,7 @@ i18n
             total_equipment: 'Équipement Total',
             by_status: 'Équipement par Statut',
             status_distribution: 'Distribution par Statut',
-            per_establishment: 'Équipement par Établissement',
+            per_establishment: 'Équipement par Établissement et service MENFOP',
             table_view: 'Équipement par Établissement (Tableau)',
             search_establishment: 'Rechercher un établissement...',
             count: 'Quantité',
@@ -83,7 +83,7 @@ i18n
             error_save: "Échec de l'enregistrement du rapport."
           },
           establishments: {
-            title: 'Établissements',
+            title: 'Établissement et service MENFOP',
             add_new: 'Ajouter un nouvel établissement',
             enter_name: "Entrer le nom de l'établissement",
             current: 'Établissements Actuels',
