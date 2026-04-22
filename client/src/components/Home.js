@@ -15,10 +15,19 @@ const Home = () => {
   const [equipmentByEstablishment, setEquipmentByEstablishment] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  // Reset to page 1 when searching
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const fetchDashboardData = async () => {
     try {
@@ -39,6 +48,20 @@ const Home = () => {
     .filter((item) =>
     item.establishment_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredEquipmentByEstablishment.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredEquipmentByEstablishment.length / itemsPerPage);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
 
   // Prepare data for Pie chart (Equipment by Status)
   const pieChartData = {
@@ -183,7 +206,7 @@ const Home = () => {
             <Card.Body>
               <Card.Title>{t('dashboard.table_view')}</Card.Title>
               <div className="table-responsive">
-                <Table striped bordered hover size="sm">
+                <Table striped bordered hover size="sm" className="mb-0">
                   <thead>
                     <tr>
                       <th>{t('sidebar.establishments')}</th>
@@ -191,7 +214,7 @@ const Home = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredEquipmentByEstablishment.map((item, index) => (
+                    {currentItems.map((item, index) => (
                       <tr key={index}>
                         <td>{item.establishment_name}</td>
                         <td>{item.equipmentCount}</td>
@@ -200,6 +223,32 @@ const Home = () => {
                   </tbody>
                 </Table>
               </div>
+
+              {totalPages > 1 && (
+                <div className="d-flex justify-content-between align-items-center mt-3">
+                  <span className="text-muted small">
+                    Page {currentPage} sur {totalPages}
+                  </span>
+                  <div className="d-flex gap-2">
+                    <Button 
+                      variant="outline-primary" 
+                      size="sm" 
+                      onClick={handlePrevPage} 
+                      disabled={currentPage === 1}
+                    >
+                      &laquo; Précédent
+                    </Button>
+                    <Button 
+                      variant="outline-primary" 
+                      size="sm" 
+                      onClick={handleNextPage} 
+                      disabled={currentPage === totalPages}
+                    >
+                      Suivant &raquo;
+                    </Button>
+                  </div>
+                </div>
+              )}
             </Card.Body>
           </Card>
         </Col>
