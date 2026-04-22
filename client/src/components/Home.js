@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Table, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Card, Table, Alert, Button } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { Pie, Bar } from 'react-chartjs-2';
