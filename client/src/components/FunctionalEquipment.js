@@ -40,7 +40,9 @@ const FunctionalEquipment = () => {
     fetchEstablishments();
   }, [fetchFunctionalEquipment, fetchEstablishments]);
 
-  const filteredEquipment = equipment.filter((item) =>
+  const filteredEquipment = [...equipment]
+    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    .filter((item) =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.establishment_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -100,7 +102,7 @@ const FunctionalEquipment = () => {
                 {establishments.length === 0 ? (
                   <option>Loading establishments...</option>
                 ) : (
-                  establishments.map((establishment) => (
+                  [...establishments].sort((a, b) => (a.name || '').localeCompare(b.name || '')).map((establishment) => (
                     <option key={establishment.id} value={establishment.id}>
                       {establishment.name}
                     </option>

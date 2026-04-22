@@ -31,9 +31,11 @@ const NewEquipment = () => {
   };
 
   const filteredEstablishments = useMemo(() => {
-    return establishments.filter((e) =>
-      e.name && e.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
-    );
+    return [...establishments]
+      .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+      .filter((e) =>
+        e.name && e.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
+      );
   }, [establishments, searchTerm]);
 
   // Sync selectedEstablishment when filter changes

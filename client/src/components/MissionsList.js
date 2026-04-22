@@ -23,11 +23,13 @@ const MissionsList = () => {
     }
   };
 
-  const filteredMissions = missions.filter((mission) =>
-    mission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (mission.description && mission.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    mission.status.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredMissions = [...missions]
+    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    .filter((mission) =>
+      mission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (mission.description && mission.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      mission.status.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   return (
     <div>

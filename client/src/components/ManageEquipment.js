@@ -54,7 +54,9 @@ const ManageEquipment = ({ userRole }) => {
     };
   }, [equipment]);
 
-  const filteredEquipment = equipment.filter((item) => {
+  const filteredEquipment = [...equipment]
+    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    .filter((item) => {
     const matchesSearch = 
       (item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase().trim())) ||
       (item.establishment_name && item.establishment_name.toLowerCase().includes(searchTerm.toLowerCase().trim()));
@@ -194,7 +196,7 @@ const ManageEquipment = ({ userRole }) => {
             <Col md={6} lg={4}>
               <Form.Select size="sm" value={establishmentFilter} onChange={(e) => setEstablishmentFilter(e.target.value)}>
                 <option value="all">{t('equipment.all_establishments')}</option>
-                {establishments.map(e => (
+                {[...establishments].sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(e => (
                   <option key={e.id} value={e.id}>{e.name}</option>
                 ))}
               </Form.Select>
@@ -299,7 +301,7 @@ const ManageEquipment = ({ userRole }) => {
                 onChange={(e) => setEditedEstablishmentId(e.target.value)}
                 required
               >
-                {establishments.map((establishment) => (
+                {[...establishments].sort((a, b) => (a.name || '').localeCompare(b.name || '')).map((establishment) => (
                   <option key={establishment.id} value={establishment.id}>
                     {establishment.name}
                   </option>

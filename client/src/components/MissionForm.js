@@ -159,7 +159,7 @@ const MissionForm = () => {
                             required
                           >
                             <option value="">Sélectionner...</option>
-                            {equipmentList.map(eq => (
+                            {equipmentList.sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(eq => (
                               <option key={eq.id} value={eq.id}>
                                 {eq.name} ({eq.establishment_name})
                               </option>

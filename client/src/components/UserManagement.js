@@ -31,10 +31,12 @@ const UserManagement = () => {
     }
   };
 
-  const filteredUsers = users.filter((user) =>
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = [...users]
+    .sort((a, b) => (a.username || '').localeCompare(b.username || ''))
+    .filter((user) =>
+      user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.role.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   const handleAddUser = async (e) => {
     e.preventDefault();

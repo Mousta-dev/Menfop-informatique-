@@ -29,9 +29,11 @@ const Establishments = ({ userRole }) => {
     }
   };
 
-  const filteredEstablishments = establishments.filter((e) =>
-    e.name && e.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
-  );
+  const filteredEstablishments = [...establishments]
+    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    .filter((e) =>
+      e.name && e.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
+    );
 
   const handleAddEstablishment = async (e) => {
     e.preventDefault();

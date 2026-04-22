@@ -22,10 +22,12 @@ const ReportsList = () => {
     }
   };
 
-  const filteredReports = reports.filter((report) =>
-    report.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    report.id.toString().includes(searchTerm)
-  );
+  const filteredReports = [...reports]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .filter((report) =>
+      report.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.id.toString().includes(searchTerm)
+    );
 
   return (
     <div>

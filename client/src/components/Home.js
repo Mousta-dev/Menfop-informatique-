@@ -34,7 +34,9 @@ const Home = () => {
     }
   };
 
-  const filteredEquipmentByEstablishment = equipmentByEstablishment.filter((item) =>
+  const filteredEquipmentByEstablishment = [...equipmentByEstablishment]
+    .sort((a, b) => (a.establishment_name || '').localeCompare(b.establishment_name || ''))
+    .filter((item) =>
     item.establishment_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
