@@ -20,15 +20,15 @@ import './App.css';
 
 const AppContent = () => {
   const { t, i18n } = useTranslation();
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
-  const [userRole, setUserRole] = useState(localStorage.getItem('role'));
+  const [isAuthenticated, setIsAuthenticated] = useState(!!sessionStorage.getItem('token'));
+  const [userRole, setUserRole] = useState(sessionStorage.getItem('role'));
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const location = useLocation();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
+    const token = sessionStorage.getItem('token');
+    const role = sessionStorage.getItem('role');
     if (token) {
       setIsAuthenticated(true);
       setUserRole(role);
@@ -45,9 +45,9 @@ const AppContent = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    localStorage.removeItem('username');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('role');
+    sessionStorage.removeItem('username');
     setIsAuthenticated(false);
     setUserRole(null);
     setShowMobileMenu(false);
@@ -73,7 +73,7 @@ const AppContent = () => {
   );
 
   const SidebarContent = () => {
-    const username = localStorage.getItem('username');
+    const username = sessionStorage.getItem('username');
     return (
       <>
         <div className="sidebar-header flex-column align-items-stretch">

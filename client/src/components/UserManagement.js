@@ -33,6 +33,7 @@ const UserManagement = () => {
 
   const filteredUsers = [...users]
     .sort((a, b) => (a.username || '').localeCompare(b.username || ''))
+    .filter((user) => user.username !== sessionStorage.getItem('username'))
     .filter((user) =>
       user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.role.toLowerCase().includes(searchTerm.toLowerCase())
