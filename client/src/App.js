@@ -47,6 +47,7 @@ const AppContent = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
+    localStorage.removeItem('username');
     setIsAuthenticated(false);
     setUserRole(null);
     setShowMobileMenu(false);

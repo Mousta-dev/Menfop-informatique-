@@ -23,6 +23,7 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
       if (response.data.success) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('role', response.data.role);
+        localStorage.setItem('username', response.data.username);
         setIsAuthenticated(true);
         setUserRole(response.data.role);
         navigate('/');

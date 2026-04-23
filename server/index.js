@@ -133,7 +133,7 @@ app.post('/api/login', async (req, res) => {
         const valid = await bcrypt.compare(password, user.password);
         if (valid) {
             const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '7d' });
-            res.json({ success: true, token, role: user.role });
+            res.json({ success: true, token, role: user.role, username: user.username });
         } else {
             res.json({ success: false, message: 'Identifiants invalides' });
         }
