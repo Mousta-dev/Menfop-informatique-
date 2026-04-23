@@ -26,7 +26,9 @@ i18n
             write_report: 'Rédiger Rapport',
             view_reports: 'Voir Rapports',
             user_management: 'Gestion Utilisateurs',
-            logout: 'Déconnexion'
+            logout: 'Déconnexion',
+            dark_mode: 'Mode Sombre',
+            light_mode: 'Mode Clair'
           },
           dashboard: {
             overview: 'Aperçu du Tableau de Bord',
@@ -148,7 +150,9 @@ i18n
             write_report: 'Write Report',
             view_reports: 'View Reports',
             user_management: 'User Management',
-            logout: 'Logout'
+            logout: 'Logout',
+            dark_mode: 'Dark Mode',
+            light_mode: 'Light Mode'
           },
           dashboard: {
             overview: 'Dashboard Overview',
