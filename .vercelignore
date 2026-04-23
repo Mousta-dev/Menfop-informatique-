@@ -1,0 +1,7 @@
+node_modules
+client/node_modules
+.git
+.env
+*.db
+check_users.js
+test_login.js
