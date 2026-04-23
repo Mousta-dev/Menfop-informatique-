@@ -72,61 +72,78 @@ const AppContent = () => {
     </Button>
   );
 
-  const SidebarContent = () => (
-    <>
-      <div className="sidebar-header flex-column align-items-stretch">
-        <div className="d-flex align-items-center mb-3">
-          <Link to="/" className="text-decoration-none d-flex align-items-center" onClick={() => setShowMobileMenu(false)}>
-            <img src="/menfop.png" alt="Logo" className="sidebar-logo" />
-            <span className="navbar-brand mb-0 h1">Menfop-infos</span>
-          </Link>
+  const SidebarContent = () => {
+    const username = localStorage.getItem('username');
+    return (
+      <>
+        <div className="sidebar-header flex-column align-items-stretch">
+          <div className="d-flex align-items-center mb-3">
+            <Link to="/" className="text-decoration-none d-flex align-items-center" onClick={() => setShowMobileMenu(false)}>
+              <img src="/menfop.png" alt="Logo" className="sidebar-logo" />
+              <span className="navbar-brand mb-0 h1">Menfop-infos</span>
+            </Link>
+          </div>
+          {isAuthenticated && (
+            <div className="user-profile-badge mb-3">
+              <div className="user-avatar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-person-circle" viewBox="0 0 16 16">
+                  <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+                  <path fillRule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
+                </svg>
+              </div>
+              <div className="user-info">
+                <span className="user-name text-truncate">{username}</span>
+                <span className="user-role-label">{userRole}</span>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
-      <div className="sidebar-content">
-        <ThemeToggle />
-        <NavLink to="/" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          {t('sidebar.dashboard')}
-        </NavLink>
-        <NavLink to="/establishments" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          {t('sidebar.establishments')}
-        </NavLink>
-        <NavLink to="/manage-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          {t('sidebar.manage_equipment')}
-        </NavLink>
-        <NavLink to="/new-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          {t('sidebar.new_equipment')}
-        </NavLink>
-        <NavLink to="/damaged-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          {t('sidebar.damaged_equipment')}
-        </NavLink>
-        <NavLink to="/functional-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          {t('sidebar.functional_equipment')}
-        </NavLink>
-        <NavLink to="/new-mission" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          {t('sidebar.new_mission')}
-        </NavLink>
-        <NavLink to="/missions" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          {t('sidebar.view_missions')}
-        </NavLink>
-        <NavLink to="/rapport" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          {t('sidebar.write_report')}
-        </NavLink>
-        <NavLink to="/reports" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
-          {t('sidebar.view_reports')}
-        </NavLink>
-        {userRole === 'administrateur' && (
-          <NavLink to="/users" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''} text-danger`} onClick={() => setShowMobileMenu(false)}>
-            {t('sidebar.user_management')}
+        <div className="sidebar-content">
+          <ThemeToggle />
+          <NavLink to="/" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+            {t('sidebar.dashboard')}
           </NavLink>
-        )}
-      </div>
-      <div className="sidebar-footer">
-        <Button variant="outline-danger" className="w-100 rounded-pill" onClick={handleLogout}>
-          {t('sidebar.logout')}
-        </Button>
-      </div>
-    </>
-  );
+          <NavLink to="/establishments" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+            {t('sidebar.establishments')}
+          </NavLink>
+          <NavLink to="/manage-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+            {t('sidebar.manage_equipment')}
+          </NavLink>
+          <NavLink to="/new-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+            {t('sidebar.new_equipment')}
+          </NavLink>
+          <NavLink to="/damaged-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+            {t('sidebar.damaged_equipment')}
+          </NavLink>
+          <NavLink to="/functional-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+            {t('sidebar.functional_equipment')}
+          </NavLink>
+          <NavLink to="/new-mission" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+            {t('sidebar.new_mission')}
+          </NavLink>
+          <NavLink to="/missions" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+            {t('sidebar.view_missions')}
+          </NavLink>
+          <NavLink to="/rapport" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+            {t('sidebar.write_report')}
+          </NavLink>
+          <NavLink to="/reports" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+            {t('sidebar.view_reports')}
+          </NavLink>
+          {userRole === 'administrateur' && (
+            <NavLink to="/users" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''} text-danger`} onClick={() => setShowMobileMenu(false)}>
+              {t('sidebar.user_management')}
+            </NavLink>
+          )}
+        </div>
+        <div className="sidebar-footer">
+          <Button variant="outline-danger" className="w-100 rounded-pill" onClick={handleLogout}>
+            {t('sidebar.logout')}
+          </Button>
+        </div>
+      </>
+    );
+  };
 
   if (location.pathname === '/login' && !isAuthenticated) {
     return (
