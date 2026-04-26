@@ -132,7 +132,8 @@ i18n
             success_update: 'Mis à jour avec succès !',
             error_fetch_equipment: 'Échec de la récupération des équipements.',
             error_fetch_establishments: 'Échec de la récupération des établissements.',
-            print: 'Imprimer'
+            print: 'Imprimer',
+            copyright: '© {{year}} Menfop-infos. Tous droits réservés.'
           }
         }
       },
@@ -256,7 +257,8 @@ i18n
             success_update: 'Updated successfully!',
             error_fetch_equipment: 'Failed to fetch equipment.',
             error_fetch_establishments: 'Failed to fetch establishments.',
-            print: 'Print'
+            print: 'Print',
+            copyright: '© {{year}} Menfop-infos. All rights reserved.'
           }
         }
       }

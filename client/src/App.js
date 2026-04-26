@@ -145,16 +145,25 @@ const AppContent = () => {
     );
   };
 
+  const Footer = () => (
+    <footer className="site-footer">
+      <p className="mb-0">{t('common.copyright', { year: new Date().getFullYear() })}</p>
+    </footer>
+  );
+
   if (location.pathname === '/login' && !isAuthenticated) {
     return (
       <div className="login-wrapper">
         <div className="login-lang-switcher">
           <ThemeToggle />
         </div>
-        <Routes>
-          <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} setUserRole={setUserRole} />} />
-          <Route path="*" element={<Navigate to="/login" />} />
-        </Routes>
+        <div className="flex-grow-1">
+          <Routes>
+            <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} setUserRole={setUserRole} />} />
+            <Route path="*" element={<Navigate to="/login" />} />
+          </Routes>
+        </div>
+        <Footer />
       </div>
     );
   }
@@ -210,24 +219,27 @@ const AppContent = () => {
 
       {/* Main Content Area */}
       <main className="main-content">
-        <Container fluid>
-          <Routes>
-            <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
-            <Route path="/establishments" element={<PrivateRoute><Establishments userRole={userRole} /></PrivateRoute>} />
-            <Route path="/new-equipment" element={<PrivateRoute><NewEquipment /></PrivateRoute>} />
-            <Route path="/damaged-equipment" element={<PrivateRoute><DamagedEquipment /></PrivateRoute>} />
-            <Route path="/functional-equipment" element={<PrivateRoute><FunctionalEquipment /></PrivateRoute>} />
-            <Route path="/manage-equipment" element={<PrivateRoute><ManageEquipment userRole={userRole} /></PrivateRoute>} />
-            <Route path="/rapport" element={<PrivateRoute><Rapport /></PrivateRoute>} />
-            <Route path="/reports" element={<PrivateRoute><ReportsList /></PrivateRoute>} />
-            <Route path="/reports/:id" element={<PrivateRoute><ReportView /></PrivateRoute>} />
-            <Route path="/new-mission" element={<PrivateRoute><MissionForm /></PrivateRoute>} />
-            <Route path="/missions" element={<PrivateRoute><MissionsList /></PrivateRoute>} />
-            <Route path="/missions/:id" element={<PrivateRoute><MissionView /></PrivateRoute>} />
-            <Route path="/users" element={<PrivateRoute>{userRole === 'administrateur' ? <UserManagement /> : <Navigate to="/" />}</PrivateRoute>} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </Container>
+        <div className="content-wrapper flex-grow-1">
+          <Container fluid>
+            <Routes>
+              <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
+              <Route path="/establishments" element={<PrivateRoute><Establishments userRole={userRole} /></PrivateRoute>} />
+              <Route path="/new-equipment" element={<PrivateRoute><NewEquipment /></PrivateRoute>} />
+              <Route path="/damaged-equipment" element={<PrivateRoute><DamagedEquipment /></PrivateRoute>} />
+              <Route path="/functional-equipment" element={<PrivateRoute><FunctionalEquipment /></PrivateRoute>} />
+              <Route path="/manage-equipment" element={<PrivateRoute><ManageEquipment userRole={userRole} /></PrivateRoute>} />
+              <Route path="/rapport" element={<PrivateRoute><Rapport /></PrivateRoute>} />
+              <Route path="/reports" element={<PrivateRoute><ReportsList /></PrivateRoute>} />
+              <Route path="/reports/:id" element={<PrivateRoute><ReportView /></PrivateRoute>} />
+              <Route path="/new-mission" element={<PrivateRoute><MissionForm /></PrivateRoute>} />
+              <Route path="/missions" element={<PrivateRoute><MissionsList /></PrivateRoute>} />
+              <Route path="/missions/:id" element={<PrivateRoute><MissionView /></PrivateRoute>} />
+              <Route path="/users" element={<PrivateRoute>{userRole === 'administrateur' ? <UserManagement /> : <Navigate to="/" />}</PrivateRoute>} />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </Container>
+        </div>
+        <Footer />
       </main>
     </div>
   );
