@@ -39,8 +39,15 @@ const ensureTables = async () => {
                 CREATE TABLE IF NOT EXISTS equipment (id SERIAL PRIMARY KEY, name TEXT NOT NULL, status TEXT NOT NULL, establishment_id INTEGER REFERENCES establishments(id));
                 CREATE TABLE IF NOT EXISTS reports (id SERIAL PRIMARY KEY, content TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
                 CREATE TABLE IF NOT EXISTS missions (id SERIAL PRIMARY KEY, name TEXT NOT NULL, description TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-                CREATE TABLE IF NOT EXISTS interventions (id SERIAL PRIMARY KEY, mission_id INTEGER REFERENCES missions(id) ON DELETE CASCADE, equipment_id INTEGER REFERENCES equipment(id), description TEXT, result TEXT);
+                CREATE TABLE IF NOT EXISTS interventions (id SERIAL PRIMARY KEY, mission_id INTEGER REFERENCES missions(id) ON DELETE CASCADE, equipment_id INTEGER REFERENCES equipment(id), equipment_name TEXT, description TEXT, result TEXT);
             `;
+            
+            // Try to add equipment_name column if it doesn't exist (for existing tables)
+            try {
+                await sql`ALTER TABLE interventions ADD COLUMN IF NOT EXISTS equipment_name TEXT`;
+            } catch (alterErr) {
+                console.log('Interventions table might already have equipment_name or ALTER not supported:', alterErr.message);
+            }
             
             // Seed Admin Alpha if not exists
             const existingAdmin = await sql`SELECT * FROM users WHERE username = 'Alpha'`;
@@ -62,7 +69,15 @@ const ensureTables = async () => {
                 dbSQLite.run(`CREATE TABLE IF NOT EXISTS equipment (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, status TEXT NOT NULL, establishment_id INTEGER, FOREIGN KEY (establishment_id) REFERENCES establishments(id))`);
                 dbSQLite.run(`CREATE TABLE IF NOT EXISTS reports (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
                 dbSQLite.run(`CREATE TABLE IF NOT EXISTS missions (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, description TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
-                dbSQLite.run(`CREATE TABLE IF NOT EXISTS interventions (id INTEGER PRIMARY KEY AUTOINCREMENT, mission_id INTEGER, equipment_id INTEGER, description TEXT, result TEXT, FOREIGN KEY (mission_id) REFERENCES missions(id) ON DELETE CASCADE, FOREIGN KEY (equipment_id) REFERENCES equipment(id))`);
+                dbSQLite.run(`CREATE TABLE IF NOT EXISTS interventions (id INTEGER PRIMARY KEY AUTOINCREMENT, mission_id INTEGER, equipment_id INTEGER, equipment_name TEXT, description TEXT, result TEXT, FOREIGN KEY (mission_id) REFERENCES missions(id) ON DELETE CASCADE, FOREIGN KEY (equipment_id) REFERENCES equipment(id))`);
+                
+                // Try to add equipment_name column if it doesn't exist (for existing tables)
+                dbSQLite.run(`ALTER TABLE interventions ADD COLUMN equipment_name TEXT`, (err) => {
+                    if (err) {
+                        // Probably column already exists, which is fine
+                        // console.log('Interventions column equipment_name might already exist');
+                    }
+                });
                 
                 dbSQLite.get('SELECT * FROM users WHERE username = ?', ['Alpha'], (err, row) => {
                     if (!err && !row) {
@@ -365,13 +380,13 @@ app.get('/api/missions/:id', authenticateToken, async (req, res) => {
             const result = await sql`SELECT * FROM missions WHERE id = ${id}`;
             row = result.rows[0];
             if (row) {
-                const intRes = await sql`SELECT i.*, e.name as equipment_name FROM interventions i LEFT JOIN equipment e ON i.equipment_id = e.id WHERE i.mission_id = ${id}`;
+                const intRes = await sql`SELECT i.*, COALESCE(e.name, i.equipment_name) as equipment_name FROM interventions i LEFT JOIN equipment e ON i.equipment_id = e.id WHERE i.mission_id = ${id}`;
                 interventions = intRes.rows;
             }
         } else {
             row = await new Promise((res, rej) => dbSQLite.get('SELECT * FROM missions WHERE id = ?', [id], (err, r) => err ? rej(err) : res(r)));
             if (row) {
-                interventions = await new Promise((res, rej) => dbSQLite.all('SELECT i.*, e.name as equipment_name FROM interventions i LEFT JOIN equipment e ON i.equipment_id = e.id WHERE i.mission_id = ?', [id], (err, r) => err ? rej(err) : res(r)));
+                interventions = await new Promise((res, rej) => dbSQLite.all('SELECT i.*, COALESCE(e.name, i.equipment_name) as equipment_name FROM interventions i LEFT JOIN equipment e ON i.equipment_id = e.id WHERE i.mission_id = ?', [id], (err, r) => err ? rej(err) : res(r)));
             }
         }
         if (row) {
@@ -391,7 +406,7 @@ app.post('/api/missions', authenticateToken, async (req, res) => {
             
             if (interventions && Array.isArray(interventions)) {
                 for (const inter of interventions) {
-                    await sql`INSERT INTO interventions (mission_id, equipment_id, description, result) VALUES (${missionId}, ${inter.equipment_id}, ${inter.description}, ${inter.result})`;
+                    await sql`INSERT INTO interventions (mission_id, equipment_id, equipment_name, description, result) VALUES (${missionId}, ${inter.equipment_id || null}, ${inter.equipment_name || null}, ${inter.description}, ${inter.result})`;
                 }
             }
             res.status(201).json({ message: "success", data: { id: missionId, name, description, status: status || 'pending' } });
@@ -406,9 +421,9 @@ app.post('/api/missions', authenticateToken, async (req, res) => {
                     const missionId = this.lastID;
                     
                     if (interventions && Array.isArray(interventions)) {
-                        const stmt = dbSQLite.prepare('INSERT INTO interventions (mission_id, equipment_id, description, result) VALUES (?, ?, ?, ?)');
+                        const stmt = dbSQLite.prepare('INSERT INTO interventions (mission_id, equipment_id, equipment_name, description, result) VALUES (?, ?, ?, ?, ?)');
                         interventions.forEach(inter => {
-                            stmt.run(missionId, inter.equipment_id, inter.description, inter.result);
+                            stmt.run(missionId, inter.equipment_id || null, inter.equipment_name || null, inter.description, inter.result);
                         });
                         stmt.finalize();
                     }

@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Form, Button, Alert, Card, Row, Col, Table } from 'react-bootstrap';
 import { missionsApi } from '../api';
-import api from '../api';
 import { Link } from 'react-router-dom';
 
 const MissionForm = () => {
@@ -9,27 +8,13 @@ const MissionForm = () => {
   const [missionDescription, setMissionDescription] = useState('');
   const [missionStatus, setMissionStatus] = useState('pending');
   const [interventions, setInterventions] = useState([]);
-  const [equipmentList, setEquipmentList] = useState([]);
   
   const [missionId, setMissionId] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  useEffect(() => {
-    fetchEquipment();
-  }, []);
-
-  const fetchEquipment = async () => {
-    try {
-      const response = await api.get('/equipment');
-      setEquipmentList(response.data.data);
-    } catch (err) {
-      console.error('Error fetching equipment:', err);
-    }
-  };
-
   const addIntervention = () => {
-    setInterventions([...interventions, { equipment_id: '', description: '', result: '' }]);
+    setInterventions([...interventions, { equipment_name: '', description: '', result: '' }]);
   };
 
   const removeIntervention = (index) => {
@@ -60,7 +45,7 @@ const MissionForm = () => {
         name: missionName,
         description: missionDescription,
         status: missionStatus,
-        interventions: interventions.filter(i => i.equipment_id !== '')
+        interventions: interventions.filter(i => i.equipment_name !== '')
       });
       setSuccess(`Mission saved successfully! ID: ${response.data.data.id}`);
       setMissionId(response.data.data.id);
@@ -153,18 +138,13 @@ const MissionForm = () => {
                     {interventions.map((inter, index) => (
                       <tr key={index}>
                         <td>
-                          <Form.Select
-                            value={inter.equipment_id}
-                            onChange={(e) => updateIntervention(index, 'equipment_id', e.target.value)}
+                          <Form.Control
+                            type="text"
+                            placeholder="Nom du matériel"
+                            value={inter.equipment_name}
+                            onChange={(e) => updateIntervention(index, 'equipment_name', e.target.value)}
                             required
-                          >
-                            <option value="">Sélectionner...</option>
-                            {equipmentList.sort((a, b) => (a.name || '').localeCompare(b.name || '')).map(eq => (
-                              <option key={eq.id} value={eq.id}>
-                                {eq.name} ({eq.establishment_name})
-                              </option>
-                            ))}
-                          </Form.Select>
+                          />
                         </td>
                         <td>
                           <Form.Control
