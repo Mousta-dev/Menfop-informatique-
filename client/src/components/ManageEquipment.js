@@ -50,6 +50,7 @@ const ManageEquipment = ({ userRole }) => {
       total: equipment.length,
       functional: equipment.filter(e => e.status === 'functional').length,
       damaged: equipment.filter(e => e.status === 'damaged').length,
+      repaired: equipment.filter(e => e.status === 'repaired').length,
       new: equipment.filter(e => e.status === 'new').length
     };
   }, [equipment]);
@@ -114,6 +115,7 @@ const ManageEquipment = ({ userRole }) => {
     switch (status) {
       case 'functional': return <Badge bg="success">{t('common.functional') || 'Fonctionnel'}</Badge>;
       case 'damaged': return <Badge bg="danger">{t('common.damaged') || 'Endommagé'}</Badge>;
+      case 'repaired': return <Badge bg="warning" text="dark">{t('common.repaired') || 'Réparé'}</Badge>;
       case 'new': return <Badge bg="info">{t('common.new') || 'Nouveau'}</Badge>;
       default: return <Badge bg="secondary">{status}</Badge>;
     }
@@ -130,7 +132,7 @@ const ManageEquipment = ({ userRole }) => {
 
       {/* Stats Overview */}
       <Row className="mb-4 g-3">
-        <Col md={3}>
+        <Col md={3} lg={2}>
           <Card className="text-center border-0 shadow-sm h-100">
             <Card.Body className="py-3">
               <div className="text-muted small mb-1 uppercase font-weight-bold">Total</div>
@@ -138,7 +140,7 @@ const ManageEquipment = ({ userRole }) => {
             </Card.Body>
           </Card>
         </Col>
-        <Col md={3}>
+        <Col md={3} lg={2}>
           <Card className="text-center border-0 shadow-sm h-100">
             <Card.Body className="py-3">
               <div className="text-muted small mb-1">{t('common.functional')}</div>
@@ -146,7 +148,7 @@ const ManageEquipment = ({ userRole }) => {
             </Card.Body>
           </Card>
         </Col>
-        <Col md={3}>
+        <Col md={3} lg={2}>
           <Card className="text-center border-0 shadow-sm h-100">
             <Card.Body className="py-3">
               <div className="text-muted small mb-1">{t('common.damaged')}</div>
@@ -154,7 +156,15 @@ const ManageEquipment = ({ userRole }) => {
             </Card.Body>
           </Card>
         </Col>
-        <Col md={3}>
+        <Col md={3} lg={2}>
+          <Card className="text-center border-0 shadow-sm h-100">
+            <Card.Body className="py-3">
+              <div className="text-muted small mb-1">{t('common.repaired')}</div>
+              <h3 className="mb-0 text-warning">{stats.repaired}</h3>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={3} lg={2}>
           <Card className="text-center border-0 shadow-sm h-100">
             <Card.Body className="py-3">
               <div className="text-muted small mb-1">{t('common.new')}</div>
@@ -190,6 +200,7 @@ const ManageEquipment = ({ userRole }) => {
                 <option value="all">{t('equipment.all_statuses')}</option>
                 <option value="functional">{t('common.functional')}</option>
                 <option value="damaged">{t('common.damaged')}</option>
+                <option value="repaired">{t('common.repaired')}</option>
                 <option value="new">{t('common.new')}</option>
               </Form.Select>
             </Col>
@@ -291,6 +302,7 @@ const ManageEquipment = ({ userRole }) => {
                 <option value="new">{t('common.new')}</option>
                 <option value="functional">{t('common.functional')}</option>
                 <option value="damaged">{t('common.damaged')}</option>
+                <option value="repaired">{t('common.repaired')}</option>
               </Form.Select>
             </Form.Group>
 

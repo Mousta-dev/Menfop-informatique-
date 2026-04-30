@@ -7,6 +7,7 @@ import Establishments from './components/Establishments';
 import NewEquipment from './components/NewEquipment';
 import DamagedEquipment from './components/DamagedEquipment';
 import FunctionalEquipment from './components/FunctionalEquipment';
+import RepairedEquipment from './components/RepairedEquipment';
 import ManageEquipment from './components/ManageEquipment';
 import Rapport from './components/Rapport';
 import ReportsList from './components/ReportsList';
@@ -118,6 +119,9 @@ const AppContent = () => {
           <NavLink to="/functional-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
             {t('sidebar.functional_equipment')}
           </NavLink>
+          <NavLink to="/repaired-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+            {t('sidebar.repaired_equipment')}
+          </NavLink>
           <NavLink to="/new-mission" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
             {t('sidebar.new_mission')}
           </NavLink>
@@ -227,6 +231,7 @@ const AppContent = () => {
               <Route path="/new-equipment" element={<PrivateRoute><NewEquipment /></PrivateRoute>} />
               <Route path="/damaged-equipment" element={<PrivateRoute><DamagedEquipment /></PrivateRoute>} />
               <Route path="/functional-equipment" element={<PrivateRoute><FunctionalEquipment /></PrivateRoute>} />
+              <Route path="/repaired-equipment" element={<PrivateRoute><RepairedEquipment /></PrivateRoute>} />
               <Route path="/manage-equipment" element={<PrivateRoute><ManageEquipment userRole={userRole} /></PrivateRoute>} />
               <Route path="/rapport" element={<PrivateRoute><Rapport /></PrivateRoute>} />
               <Route path="/reports" element={<PrivateRoute><ReportsList /></PrivateRoute>} />

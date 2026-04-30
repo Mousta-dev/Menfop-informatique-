@@ -69,14 +69,15 @@ const Home = () => {
       // Translate status labels for the chart
       if (item.status === 'functional') return t('common.functional');
       if (item.status === 'damaged') return t('common.damaged');
+      if (item.status === 'repaired') return t('common.repaired');
       if (item.status === 'new') return t('common.new');
       return item.status;
     }),
     datasets: [
       {
         data: summaryData.statusCounts.map(item => item.count),
-        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'], // Customize colors
-        hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
+        backgroundColor: ['#28a745', '#dc3545', '#ffc107', '#17a2b8', '#6c757d'], // Success, Danger, Warning, Info, Secondary
+        hoverBackgroundColor: ['#218838', '#c82333', '#e0a800', '#138496', '#5a6268'],
       },
     ],
   };
@@ -164,6 +165,7 @@ const Home = () => {
                         <td>{
                           item.status === 'functional' ? t('common.functional') :
                           item.status === 'damaged' ? t('common.damaged') :
+                          item.status === 'repaired' ? t('common.repaired') :
                           item.status === 'new' ? t('common.new') : item.status
                         }</td>
                         <td>{item.count}</td>
