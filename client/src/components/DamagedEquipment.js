@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Alert, Form, Button, Card } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import api from '../api';
 
 const DamagedEquipment = () => {
+  const { t } = useTranslation();
   const [equipment, setEquipment] = useState([]);
   const [establishments, setEstablishments] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,13 +75,18 @@ const DamagedEquipment = () => {
   };
 
   return (
-    <div>
-      <h1>Damaged Equipment</h1>
+    <div className="py-2">
+      <div className="d-flex justify-content-between align-items-center mb-4 no-print">
+        <h1 className="mb-0">Damaged Equipment</h1>
+        <Button variant="outline-primary" onClick={() => window.print()}>
+          🖨️ {t('common.print') || 'Imprimer'}
+        </Button>
+      </div>
 
       {error && <Alert variant="danger">{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
 
-      <Card className="mb-4">
+      <Card className="mb-4 no-print">
         <Card.Body>
           <Card.Title>Add Damaged Equipment Manually</Card.Title>
           <Form onSubmit={handleAddDamagedEquipment}>
@@ -119,7 +126,7 @@ const DamagedEquipment = () => {
         </Card.Body>
       </Card>
 
-      <div className="d-flex justify-content-between align-items-center mb-3">
+      <div className="d-flex justify-content-between align-items-center mb-3 no-print">
         <h2>List of Damaged Equipment</h2>
         <Form.Control
           type="text"

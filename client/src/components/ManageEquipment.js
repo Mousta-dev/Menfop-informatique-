@@ -123,7 +123,7 @@ const ManageEquipment = ({ userRole }) => {
 
   return (
     <div className="py-2">
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="d-flex justify-content-between align-items-center mb-4 no-print">
         <h1 className="mb-0">{t('sidebar.manage_equipment')}</h1>
         <Button variant="outline-primary" onClick={() => window.print()}>
           🖨️ {t('common.print') || 'Imprimer'}
@@ -131,7 +131,7 @@ const ManageEquipment = ({ userRole }) => {
       </div>
 
       {/* Stats Overview */}
-      <Row className="mb-4 g-3">
+      <Row className="mb-4 g-3 no-print">
         <Col md={3} lg={2}>
           <Card className="text-center border-0 shadow-sm h-100">
             <Card.Body className="py-3">
@@ -226,7 +226,7 @@ const ManageEquipment = ({ userRole }) => {
                 <th className="py-3 text-muted">{t('common.name')}</th>
                 <th className="py-3 text-muted">{t('common.status')}</th>
                 <th className="py-3 text-muted">{t('establishments.name_label')}</th>
-                <th className="px-4 py-3 text-muted text-end">{t('common.actions')}</th>
+                <th className="px-4 py-3 text-muted text-end no-print">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -247,7 +247,7 @@ const ManageEquipment = ({ userRole }) => {
                             {item.establishment_name}
                         </span>
                     </td>
-                    <td className="px-4 text-end">
+                    <td className="px-4 text-end no-print">
                       <Button
                         variant="warning"
                         size="sm"

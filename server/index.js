@@ -32,39 +32,69 @@ const ensureTables = async () => {
     
     if (usePostgres) {
         try {
-            // Run all table creations in one go if possible, or at least check once
-            await sql`
-                CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL, role TEXT DEFAULT 'utilisateur');
-                CREATE TABLE IF NOT EXISTS establishments (id SERIAL PRIMARY KEY, name TEXT NOT NULL UNIQUE);
-                CREATE TABLE IF NOT EXISTS equipment (id SERIAL PRIMARY KEY, name TEXT NOT NULL, status TEXT NOT NULL, establishment_id INTEGER REFERENCES establishments(id));
-                CREATE TABLE IF NOT EXISTS reports (id SERIAL PRIMARY KEY, content TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-                CREATE TABLE IF NOT EXISTS missions (id SERIAL PRIMARY KEY, name TEXT NOT NULL, description TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-                CREATE TABLE IF NOT EXISTS interventions (id SERIAL PRIMARY KEY, mission_id INTEGER REFERENCES missions(id) ON DELETE CASCADE, equipment_id INTEGER REFERENCES equipment(id), equipment_name TEXT, description TEXT, result TEXT);
-            `;
+            // Run table creations individually for better reliability
+            await sql`CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY, 
+                username TEXT, 
+                password TEXT NOT NULL, 
+                role TEXT DEFAULT 'utilisateur'
+            )`;
             
-            // Try to add equipment_name column if it doesn't exist (for existing tables)
+            // Add columns individually
+            try { await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`; } catch (e) { console.log('Email column check error:', e.message); }
+            try { await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT`; } catch (e) { console.log('Phone column check error:', e.message); }
+            
+            // Ensure constraints/indexes
+            try { await sql`ALTER TABLE users ADD CONSTRAINT users_email_unique UNIQUE (email)`; } catch (e) {}
+            try { await sql`ALTER TABLE users ADD CONSTRAINT users_phone_unique UNIQUE (phone)`; } catch (e) {}
+            try { await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON users(email)`; } catch (e) {}
+            try { await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_phone_idx ON users(phone)`; } catch (e) {}
+
+            await sql`CREATE TABLE IF NOT EXISTS establishments (id SERIAL PRIMARY KEY, name TEXT NOT NULL UNIQUE)`;
+            await sql`CREATE TABLE IF NOT EXISTS equipment (id SERIAL PRIMARY KEY, name TEXT NOT NULL, status TEXT NOT NULL, establishment_id INTEGER REFERENCES establishments(id))`;
+            await sql`CREATE TABLE IF NOT EXISTS reports (id SERIAL PRIMARY KEY, content TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`;
+            await sql`CREATE TABLE IF NOT EXISTS missions (id SERIAL PRIMARY KEY, name TEXT NOT NULL, description TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`;
+            await sql`CREATE TABLE IF NOT EXISTS interventions (id SERIAL PRIMARY KEY, mission_id INTEGER REFERENCES missions(id) ON DELETE CASCADE, equipment_id INTEGER REFERENCES equipment(id), equipment_name TEXT, description TEXT, result TEXT)`;
+            
+            // Try to add equipment_name column if it doesn't exist
             try {
                 await sql`ALTER TABLE interventions ADD COLUMN IF NOT EXISTS equipment_name TEXT`;
             } catch (alterErr) {
-                console.log('Interventions table might already have equipment_name or ALTER not supported:', alterErr.message);
+                console.log('Interventions column check error:', alterErr.message);
             }
             
-            // Seed Admin Alpha if not exists
-            const existingAdmin = await sql`SELECT * FROM users WHERE username = 'Alpha'`;
+            // Seed Admin Alpha
+            const hash = await bcrypt.hash('Mousta@2025', 10);
+            const existingAdmin = await sql`SELECT * FROM users WHERE username = 'Alpha' OR email = 'admin@menfop.com'`;
             if (existingAdmin.rows.length === 0) {
-                const hash = await bcrypt.hash('Mousta@2025', 10);
-                await sql`INSERT INTO users (username, password, role) VALUES ('Alpha', ${hash}, 'administrateur')`;
+                await sql`INSERT INTO users (username, email, password, role) VALUES ('Alpha', 'admin@menfop.com', ${hash}, 'administrateur')`;
                 console.log('Seed: Admin Alpha created in Postgres.');
+            } else {
+                // Ensure Alpha has the right role and email if already exists
+                await sql`UPDATE users SET email = 'admin@menfop.com', role = 'administrateur' WHERE username = 'Alpha' AND (email IS NULL OR role != 'administrateur')`;
             }
             tablesEnsured = true;
         } catch (err) {
-            console.error('Postgres init error:', err);
-            // Don't set tablesEnsured = true so it retries on next request if it failed
+            console.error('Postgres init error detail:', err);
+            // Re-throw to be caught by the middleware and show 500
+            throw err;
         }
     } else {
         return new Promise((resolve, reject) => {
             dbSQLite.serialize(() => {
-                dbSQLite.run(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password TEXT NOT NULL, role TEXT DEFAULT 'utilisateur')`);
+                dbSQLite.run(`CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                    username TEXT, 
+                    email TEXT UNIQUE,
+                    phone TEXT UNIQUE,
+                    password TEXT NOT NULL, 
+                    role TEXT DEFAULT 'utilisateur'
+                )`);
+                
+                // Try to add email and phone columns for existing SQLite tables
+                dbSQLite.run(`ALTER TABLE users ADD COLUMN email TEXT`, (err) => {});
+                dbSQLite.run(`ALTER TABLE users ADD COLUMN phone TEXT`, (err) => {});
+
                 dbSQLite.run(`CREATE TABLE IF NOT EXISTS establishments (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE)`);
                 dbSQLite.run(`CREATE TABLE IF NOT EXISTS equipment (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, status TEXT NOT NULL, establishment_id INTEGER, FOREIGN KEY (establishment_id) REFERENCES establishments(id))`);
                 dbSQLite.run(`CREATE TABLE IF NOT EXISTS reports (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
@@ -72,17 +102,12 @@ const ensureTables = async () => {
                 dbSQLite.run(`CREATE TABLE IF NOT EXISTS interventions (id INTEGER PRIMARY KEY AUTOINCREMENT, mission_id INTEGER, equipment_id INTEGER, equipment_name TEXT, description TEXT, result TEXT, FOREIGN KEY (mission_id) REFERENCES missions(id) ON DELETE CASCADE, FOREIGN KEY (equipment_id) REFERENCES equipment(id))`);
                 
                 // Try to add equipment_name column if it doesn't exist (for existing tables)
-                dbSQLite.run(`ALTER TABLE interventions ADD COLUMN equipment_name TEXT`, (err) => {
-                    if (err) {
-                        // Probably column already exists, which is fine
-                        // console.log('Interventions column equipment_name might already exist');
-                    }
-                });
+                dbSQLite.run(`ALTER TABLE interventions ADD COLUMN equipment_name TEXT`, (err) => {});
                 
-                dbSQLite.get('SELECT * FROM users WHERE username = ?', ['Alpha'], (err, row) => {
+                dbSQLite.get('SELECT * FROM users WHERE username = ? OR email = ?', ['Alpha', 'admin@menfop.com'], (err, row) => {
                     if (!err && !row) {
                         bcrypt.hash('Mousta@2025', 10, (err, hash) => {
-                            if (!err) dbSQLite.run('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', ['Alpha', hash, 'administrateur'], () => {
+                            if (!err) dbSQLite.run('INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)', ['Alpha', 'admin@menfop.com', hash, 'administrateur'], () => {
                                 tablesEnsured = true;
                                 resolve();
                             });
@@ -106,6 +131,30 @@ app.use(async (req, res, next) => {
         next();
     } catch (err) {
         res.status(500).json({ error: "Database initialization failed" });
+    }
+});
+
+app.get('/api/migrate-db', async (req, res) => {
+    try {
+        if (usePostgres) {
+            await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`;
+            await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT`;
+            try { await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON users(email)`; } catch(e) {}
+            try { await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_phone_idx ON users(phone)`; } catch(e) {}
+            
+            const hash = await require('bcryptjs').hash('Mousta@2025', 10);
+            const check = await sql`SELECT * FROM users WHERE username = 'Alpha'`;
+            if (check.rows.length > 0) {
+                await sql`UPDATE users SET email = 'admin@menfop.com', password = ${hash}, role = 'administrateur' WHERE username = 'Alpha'`;
+            } else {
+                await sql`INSERT INTO users (username, email, password, role) VALUES ('Alpha', 'admin@menfop.com', ${hash}, 'administrateur')`;
+            }
+            res.json({ success: true, message: "Postgres migration completed." });
+        } else {
+            res.json({ success: true, message: "SQLite used, no remote migration needed." });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
@@ -137,20 +186,73 @@ app.post('/api/login', async (req, res) => {
     try {
         let user;
         if (usePostgres) {
-            const result = await sql`SELECT * FROM users WHERE LOWER(username) = LOWER(${username})`;
-            user = result.rows[0];
+            try {
+                // Try to search by username, email, phone or admin alias
+                const result = await sql`SELECT * FROM users WHERE LOWER(username) = LOWER(${username}) OR LOWER(email) = LOWER(${username}) OR phone = ${username} OR (${username} = 'admin' AND username = 'Alpha')`;
+                user = result.rows[0];
+            } catch (err) {
+                // Absolute fallback if columns are missing
+                const result = await sql`SELECT * FROM users WHERE LOWER(username) = LOWER(${username})`;
+                user = result.rows[0];
+            }
         } else {
-            user = await new Promise((res, rej) => dbSQLite.get('SELECT * FROM users WHERE LOWER(username) = LOWER(?)', [username], (err, r) => err ? rej(err) : res(r)));
+            try {
+                user = await new Promise((res, rej) => dbSQLite.get('SELECT * FROM users WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) OR phone = ? OR (? = "admin" AND username = "Alpha")', [username, username, username, username], (err, r) => err ? rej(err) : res(r)));
+            } catch (err) {
+                user = await new Promise((res, rej) => dbSQLite.get('SELECT * FROM users WHERE LOWER(username) = LOWER(?)', [username], (err, r) => err ? rej(err) : res(r)));
+            }
         }
 
         if (!user) return res.json({ success: false, message: 'Identifiants invalides' });
         
         const valid = await bcrypt.compare(password, user.password);
         if (valid) {
-            const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '7d' });
-            res.json({ success: true, token, role: user.role, username: user.username });
+            const displayName = user.username || user.email || user.phone;
+            const token = jwt.sign({ id: user.id, username: displayName, role: user.role }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '7d' });
+            res.json({ success: true, token, role: user.role, username: displayName });
         } else {
             res.json({ success: false, message: 'Identifiants invalides' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- Public Registration Route ---
+app.post('/api/register', async (req, res) => {
+    let { username, email, phone, password } = req.body;
+    if (username) username = username.trim();
+    if (email) email = email.trim();
+    if (phone) phone = phone.trim();
+    if (password) password = password.trim();
+
+    if (!username || !password) {
+        return res.status(400).json({ error: "Nom d'utilisateur et mot de passe requis." });
+    }
+
+    if (phone && !/^\d{8}$/.test(phone)) {
+        return res.status(400).json({ error: "Le numéro de téléphone doit comporter 8 chiffres." });
+    }
+
+    try {
+        const hash = await bcrypt.hash(password, 10);
+        const role = 'utilisateur'; // Always 'utilisateur' for self-registration
+
+        if (usePostgres) {
+            // Check if username/email/phone already exists
+            const existing = await sql`SELECT * FROM users WHERE username = ${username} OR email = ${email} OR phone = ${phone}`;
+            if (existing.rows.length > 0) return res.status(400).json({ error: "Cet utilisateur, email ou numéro existe déjà." });
+
+            const result = await sql`INSERT INTO users (username, email, phone, password, role) VALUES (${username}, ${email}, ${phone}, ${hash}, ${role}) RETURNING id`;
+            res.status(201).json({ success: true, id: result.rows[0].id });
+        } else {
+            dbSQLite.run('INSERT INTO users (username, email, phone, password, role) VALUES (?, ?, ?, ?, ?)', [username, email, phone, hash, role], function(err) {
+                if (err) {
+                    if (err.message.includes('UNIQUE')) return res.status(400).json({ error: "Cet utilisateur, email ou numéro existe déjà." });
+                    return res.status(400).json({ error: err.message });
+                }
+                res.status(201).json({ success: true, id: this.lastID });
+            });
         }
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -498,23 +600,30 @@ app.get('/api/dashboard/equipment-by-establishment', authenticateToken, async (r
 app.get('/api/users', authenticateToken, authorizeRole('administrateur'), async (req, res) => {
     try {
         let rows;
-        if (usePostgres) rows = (await sql`SELECT id, username, role FROM users`).rows;
-        else rows = await new Promise((res, rej) => dbSQLite.all('SELECT id, username, role FROM users', [], (err, r) => err ? rej(err) : res(r)));
+        if (usePostgres) rows = (await sql`SELECT id, username, email, phone, role FROM users`).rows;
+        else rows = await new Promise((res, rej) => dbSQLite.all('SELECT id, username, email, phone, role FROM users', [], (err, r) => err ? rej(err) : res(r)));
         res.json({ data: rows });
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
 app.post('/api/users', authenticateToken, authorizeRole('administrateur'), async (req, res) => {
-    let { username, password, role } = req.body;
+    let { username, email, phone, password, role } = req.body;
     if (username) username = username.trim();
+    if (email) email = email.trim();
+    if (phone) phone = phone.trim();
     if (password) password = password.trim();
+
+    if (phone && !/^\d{8}$/.test(phone)) {
+        return res.status(400).json({ error: "Le numéro de téléphone doit comporter exactement 8 chiffres." });
+    }
+
     try {
         const hash = await bcrypt.hash(password, 10);
         if (usePostgres) {
-            const result = await sql`INSERT INTO users (username, password, role) VALUES (${username}, ${hash}, ${role || 'utilisateur'}) RETURNING id`;
+            const result = await sql`INSERT INTO users (username, email, phone, password, role) VALUES (${username}, ${email}, ${phone}, ${hash}, ${role || 'utilisateur'}) RETURNING id`;
             res.status(201).json({ message: "success", id: result.rows[0].id });
         } else {
-            dbSQLite.run('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [username, hash, role || 'utilisateur'], function(err) {
+            dbSQLite.run('INSERT INTO users (username, email, phone, password, role) VALUES (?, ?, ?, ?, ?)', [username, email, phone, hash, role || 'utilisateur'], function(err) {
                 if (err) return res.status(400).json({ error: err.message });
                 res.status(201).json({ message: "success", id: this.lastID });
             });
@@ -524,25 +633,29 @@ app.post('/api/users', authenticateToken, authorizeRole('administrateur'), async
 
 app.put('/api/users/:id', authenticateToken, authorizeRole('administrateur'), async (req, res) => {
     const { id } = req.params;
-    let { username, password, role } = req.body;
+    let { username, email, phone, password, role } = req.body;
     if (username) username = username.trim();
+    if (email) email = email.trim();
+    if (phone) phone = phone.trim();
     if (password) password = password.trim();
+
+    if (phone && !/^\d{8}$/.test(phone)) {
+        return res.status(400).json({ error: "Le numéro de téléphone doit comporter exactement 8 chiffres." });
+    }
+
     try {
-        let query;
-        let params = [];
-        
         if (password) {
             const hash = await bcrypt.hash(password, 10);
             if (usePostgres) {
-                await sql`UPDATE users SET username = ${username}, password = ${hash}, role = ${role} WHERE id = ${id}`;
+                await sql`UPDATE users SET username = ${username}, email = ${email}, phone = ${phone}, password = ${hash}, role = ${role} WHERE id = ${id}`;
             } else {
-                await new Promise((res, rej) => dbSQLite.run('UPDATE users SET username = ?, password = ?, role = ? WHERE id = ?', [username, hash, role, id], (err) => err ? rej(err) : res()));
+                await new Promise((res, rej) => dbSQLite.run('UPDATE users SET username = ?, email = ?, phone = ?, password = ?, role = ? WHERE id = ?', [username, email, phone, hash, role, id], (err) => err ? rej(err) : res()));
             }
         } else {
             if (usePostgres) {
-                await sql`UPDATE users SET username = ${username}, role = ${role} WHERE id = ${id}`;
+                await sql`UPDATE users SET username = ${username}, email = ${email}, phone = ${phone}, role = ${role} WHERE id = ${id}`;
             } else {
-                await new Promise((res, rej) => dbSQLite.run('UPDATE users SET username = ?, role = ? WHERE id = ?', [username, role, id], (err) => err ? rej(err) : res()));
+                await new Promise((res, rej) => dbSQLite.run('UPDATE users SET username = ?, email = ?, phone = ?, role = ? WHERE id = ?', [username, email, phone, role, id], (err) => err ? rej(err) : res()));
             }
         }
         res.json({ message: "Utilisateur mis à jour avec succès" });

@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, Table, Alert, Button, Form } from 'react-bootstrap';
 import api from '../api';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const ReportsList = () => {
+  const { t } = useTranslation();
   const [reports, setReports] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
@@ -30,9 +32,15 @@ const ReportsList = () => {
     );
 
   return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h1>Liste des Rapports</h1>
+    <div className="py-2">
+      <div className="d-flex justify-content-between align-items-center mb-4 no-print">
+        <h1 className="mb-0">Liste des Rapports</h1>
+        <Button variant="outline-primary" onClick={() => window.print()}>
+          🖨️ {t('common.print') || 'Imprimer'}
+        </Button>
+      </div>
+
+      <div className="d-flex justify-content-end mb-3 no-print">
         <Form.Control
           type="text"
           placeholder="Rechercher un rapport..."
@@ -54,7 +62,7 @@ const ReportsList = () => {
                   <th>ID</th>
                   <th>Contenu (Extrait)</th>
                   <th>Date de Création</th>
-                  <th>Action</th>
+                  <th className="no-print">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -63,7 +71,7 @@ const ReportsList = () => {
                     <td>{report.id}</td>
                     <td>{report.content.substring(0, 100)}...</td> {/* Show first 100 chars */}
                     <td>{new Date(report.created_at).toLocaleString()}</td>
-                    <td>
+                    <td className="no-print">
                       <Button as={Link} to={`/reports/${report.id}`} variant="info" size="sm" title="Voir">
                         👁️ <span className="d-none d-md-inline ms-1">Voir</span>
                       </Button>

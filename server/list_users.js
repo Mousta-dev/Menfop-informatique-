@@ -1,5 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./server/management.db', (err) => {
+const path = require('path');
+const dbPath = path.join(__dirname, 'management.db');
+const db = new sqlite3.Database(dbPath, (err) => {
     if (err) console.error(err.message);
 });
 db.all('SELECT id, username, email, phone, role FROM users', [], (err, rows) => {

@@ -3,8 +3,10 @@ import { Card, Table, Alert, Button } from 'react-bootstrap';
 import { missionsApi } from '../api'; // Use the new missionsApi
 import { Link } from 'react-router-dom';
 import { Form } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 
 const MissionsList = () => {
+  const { t } = useTranslation();
   const [missions, setMissions] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
@@ -32,9 +34,15 @@ const MissionsList = () => {
     );
 
   return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h1>Liste des Missions</h1>
+    <div className="py-2">
+      <div className="d-flex justify-content-between align-items-center mb-4 no-print">
+        <h1 className="mb-0">Liste des Missions</h1>
+        <Button variant="outline-primary" onClick={() => window.print()}>
+          🖨️ {t('common.print') || 'Imprimer'}
+        </Button>
+      </div>
+
+      <div className="d-flex justify-content-end mb-3 no-print">
         <Form.Control
           type="text"
           placeholder="Rechercher une mission..."
@@ -58,7 +66,7 @@ const MissionsList = () => {
                   <th>Description</th>
                   <th>Statut</th>
                   <th>Date de Création</th>
-                  <th>Action</th>
+                  <th className="no-print">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -69,7 +77,7 @@ const MissionsList = () => {
                     <td>{mission.description ? mission.description.substring(0, 100) : ''}...</td>
                     <td>{mission.status}</td>
                     <td>{new Date(mission.created_at).toLocaleString()}</td>
-                    <td>
+                    <td className="no-print">
                       {/* You can add a view/edit button here if needed */}
                       <Button as={Link} to={`/missions/${mission.id}`} variant="info" size="sm" title="Voir">
                         👁️ <span className="d-none d-md-inline ms-1">Voir</span>

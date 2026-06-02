@@ -30,7 +30,7 @@ const Establishments = ({ userRole }) => {
   };
 
   const filteredEstablishments = [...establishments]
-    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    .sort((a, b) => a.id - b.id)
     .filter((e) =>
       e.name && e.name.toLowerCase().includes(searchTerm.toLowerCase().trim())
     );
@@ -112,13 +112,18 @@ const Establishments = ({ userRole }) => {
   };
 
   return (
-    <div>
-      <h1>{t('establishments.title')}</h1>
+    <div className="py-2">
+      <div className="d-flex justify-content-between align-items-center mb-4 no-print">
+        <h1 className="mb-0">{t('establishments.title')}</h1>
+        <Button variant="outline-primary" onClick={() => window.print()}>
+          🖨️ {t('common.print') || 'Imprimer'}
+        </Button>
+      </div>
 
       {error && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
       {success && <Alert variant="success" onClose={() => setSuccess('')} dismissible>{success}</Alert>}
 
-      <Form onSubmit={handleAddEstablishment} className="mb-4">
+      <Form onSubmit={handleAddEstablishment} className="mb-4 no-print">
         <Form.Group className="mb-3">
           <Form.Label>{t('establishments.add_new')}</Form.Label>
           <Form.Control
@@ -133,7 +138,7 @@ const Establishments = ({ userRole }) => {
         </Button>
       </Form>
 
-      <div className="d-flex justify-content-between align-items-center mb-3">
+      <div className="d-flex justify-content-between align-items-center mb-3 no-print">
         <h2>{t('establishments.current')}</h2>
         <div className="d-flex gap-2" style={{ width: '400px' }}>
             <Form.Control
@@ -157,15 +162,15 @@ const Establishments = ({ userRole }) => {
             <tr>
               <th>ID</th>
               <th>{t('common.name')}</th>
-              <th className="text-center">{t('common.actions')}</th>
+              <th className="text-center no-print">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody>
             {filteredEstablishments.map((establishment) => (
               <tr key={establishment.id}>
-                <td>{establishment.id}</td>
+                <td>{establishment.id.toString().padStart(4, '0')}</td>
                 <td>{establishment.name}</td>
-                <td className="text-center">
+                <td className="text-center no-print">
                   <Button variant="warning" size="sm" className="me-2 btn-modifier" onClick={() => handleEdit(establishment)} title={t('common.edit')}>
                     ✏️
                   </Button>

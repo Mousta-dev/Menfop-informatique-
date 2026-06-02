@@ -47,10 +47,10 @@ const MissionView = () => {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1>Détails de la Mission #{mission.id}</h1>
         <div>
-          <Button variant="outline-primary" className="me-2" onClick={() => window.print()}>
+          <Button variant="outline-primary" className="me-2 no-print" onClick={() => window.print()}>
             🖨️ {t('common.print') || 'Imprimer'}
           </Button>
-          <Button variant="secondary" onClick={() => navigate('/missions')}>Retour à la liste</Button>
+          <Button variant="secondary" className="no-print" onClick={() => navigate('/missions')}>Retour à la liste</Button>
         </div>
       </div>
 

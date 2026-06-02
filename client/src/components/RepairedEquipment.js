@@ -74,13 +74,18 @@ const RepairedEquipment = () => {
   };
 
   return (
-    <div>
-      <h1>{t('sidebar.repaired_equipment')}</h1>
+    <div className="py-2">
+      <div className="d-flex justify-content-between align-items-center mb-4 no-print">
+        <h1 className="mb-0">{t('sidebar.repaired_equipment')}</h1>
+        <Button variant="outline-primary" onClick={() => window.print()}>
+          🖨️ {t('common.print') || 'Imprimer'}
+        </Button>
+      </div>
 
       {error && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
       {success && <Alert variant="success" onClose={() => setSuccess('')} dismissible>{success}</Alert>}
 
-      <Card className="mb-4">
+      <Card className="mb-4 no-print">
         <Card.Body>
           <Card.Title>{t('equipment.add_new')}</Card.Title>
           <Form onSubmit={handleAddRepairedEquipment}>
@@ -120,7 +125,7 @@ const RepairedEquipment = () => {
         </Card.Body>
       </Card>
 
-      <div className="d-flex justify-content-between align-items-center mb-3">
+      <div className="d-flex justify-content-between align-items-center mb-3 no-print">
         <h2>{t('sidebar.repaired_equipment')}</h2>
         <Form.Control
           type="text"

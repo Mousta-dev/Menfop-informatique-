@@ -77,13 +77,18 @@ const NewEquipment = () => {
   };
 
   return (
-    <div>
-      <h1>{t('equipment.add_new')}</h1>
+    <div className="py-2">
+      <div className="d-flex justify-content-between align-items-center mb-4 no-print">
+        <h1 className="mb-0">{t('equipment.add_new')}</h1>
+        <Button variant="outline-primary" onClick={() => window.print()}>
+          🖨️ {t('common.print') || 'Imprimer'}
+        </Button>
+      </div>
       
       {error && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
       {success && <Alert variant="success" onClose={() => setSuccess('')} dismissible>{success}</Alert>}
 
-      <Card className="mb-4">
+      <Card className="mb-4 no-print">
         <Card.Body>
           <Form.Group className="mb-3">
             <Form.Label><strong>{t('equipment.search_establishment')}</strong></Form.Label>
@@ -104,7 +109,7 @@ const NewEquipment = () => {
         </Card.Body>
       </Card>
 
-      <Form onSubmit={handleSubmit}>
+      <Form onSubmit={handleSubmit} className="no-print">
         <Form.Group className="mb-3">
           <Form.Label>{t('equipment.name')}</Form.Label>
           <Form.Control

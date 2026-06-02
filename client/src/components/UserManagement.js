@@ -5,6 +5,8 @@ import api from '../api';
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [newUsername, setNewUsername] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPhone, setNewPhone] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newRole, setNewRole] = useState('utilisateur');
   const [searchTerm, setSearchTerm] = useState('');
@@ -14,6 +16,8 @@ const UserManagement = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [editedUsername, setEditedUsername] = useState('');
+  const [editedEmail, setEditedEmail] = useState('');
+  const [editedPhone, setEditedPhone] = useState('');
   const [editedRole, setEditedRole] = useState('');
   const [editedPassword, setEditedPassword] = useState(''); // Optional
 
@@ -32,10 +36,12 @@ const UserManagement = () => {
   };
 
   const filteredUsers = [...users]
-    .sort((a, b) => (a.username || '').localeCompare(b.username || ''))
+    .sort((a, b) => (a.username || a.email || a.phone || '').localeCompare(b.username || b.email || b.phone || ''))
     .filter((user) => user.username !== sessionStorage.getItem('username'))
     .filter((user) =>
-      user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.username && user.username.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (user.phone && user.phone.includes(searchTerm)) ||
       user.role.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -44,60 +50,66 @@ const UserManagement = () => {
     setError('');
     setSuccess('');
     const trimmedUsername = newUsername.trim();
+    const trimmedEmail = newEmail.trim();
+    const trimmedPhone = newPhone.trim();
     const trimmedPassword = newPassword.trim();
     const trimmedRole = newRole.trim();
 
-    if (!trimmedUsername || !trimmedPassword) {
-      setError("Le nom d'utilisateur et le mot de passe sont requis.");
+    if (!trimmedPassword) {
+      setError("Le mot de passe est requis.");
       return;
     }
+
+    if (!trimmedEmail && !trimmedPhone) {
+        setError("L'email ou le numéro de téléphone est requis.");
+        return;
+    }
+
+    if (trimmedPhone && !/^\d{8}$/.test(trimmedPhone)) {
+        setError("Le numéro de téléphone doit comporter exactement 8 chiffres.");
+        return;
+    }
+
     try {
       await api.post('/users', { 
         username: trimmedUsername, 
+        email: trimmedEmail,
+        phone: trimmedPhone,
         password: trimmedPassword, 
         role: trimmedRole 
       });
       setSuccess('Utilisateur ajouté avec succès !');
       setNewUsername('');
+      setNewEmail('');
+      setNewPhone('');
       setNewPassword('');
       setNewRole('utilisateur');
       fetchUsers();
     } catch (err) {
       console.error('Error adding user:', err);
-      setError("Erreur lors de l'ajout de l'utilisateur.");
+      setError(err.response?.data?.error || "Erreur lors de l'ajout de l'utilisateur.");
     }
   };
 
   const handleDelete = async (id) => {
     setError('');
     setSuccess('');
-    console.log(`Tentative de suppression de l'utilisateur ID: ${id}`);
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
       try {
-        const url = `/users/${id}`;
-        console.log(`Appel API DELETE sur: ${url}`);
-        const response = await api.delete(url);
+        const response = await api.delete(`/users/${id}`);
         setSuccess(response.data.message || 'Utilisateur supprimé.');
         fetchUsers();
       } catch (err) {
-        console.error('Full error object:', err);
-        const serverError = err.response?.data?.error || err.response?.data?.message;
-        const status = err.response?.status;
-        
-        if (serverError) {
-          setError(`${serverError} (Code: ${status})`);
-        } else if (status === 403) {
-          setError("Session expirée ou droits insuffisants. Veuillez vous reconnecter.");
-        } else {
-          setError(`Erreur technique : ${err.message} (Code: ${status || 'Réseau'})`);
-        }
+        setError(err.response?.data?.error || "Erreur lors de la suppression.");
       }
     }
   };
 
   const handleEdit = (user) => {
     setCurrentUser(user);
-    setEditedUsername(user.username);
+    setEditedUsername(user.username || '');
+    setEditedEmail(user.email || '');
+    setEditedPhone(user.phone || '');
     setEditedRole(user.role);
     setEditedPassword('');
     setShowEditModal(true);
@@ -111,10 +123,29 @@ const UserManagement = () => {
 
   const handleSaveEdit = async (e) => {
     e.preventDefault();
+    setError('');
+    const trimmedUsername = editedUsername.trim();
+    const trimmedEmail = editedEmail.trim();
+    const trimmedPhone = editedPhone.trim();
+    const trimmedRole = editedRole.trim();
+
+    if (!trimmedEmail && !trimmedPhone) {
+        setError("L'email ou le numéro de téléphone est requis.");
+        return;
+    }
+
+    if (trimmedPhone && !/^\d{8}$/.test(trimmedPhone)) {
+        setError("Le numéro de téléphone doit comporter exactement 8 chiffres.");
+        return;
+    }
+
     try {
-      const trimmedUsername = editedUsername.trim();
-      const trimmedRole = editedRole.trim();
-      const updateData = { username: trimmedUsername, role: trimmedRole };
+      const updateData = { 
+        username: trimmedUsername, 
+        email: trimmedEmail,
+        phone: trimmedPhone,
+        role: trimmedRole 
+      };
       
       if (editedPassword && editedPassword.trim()) {
         updateData.password = editedPassword.trim();
@@ -125,7 +156,7 @@ const UserManagement = () => {
       handleCloseEditModal();
       fetchUsers();
     } catch (err) {
-      setError('Erreur lors de la mise à jour.');
+      setError(err.response?.data?.error || 'Erreur lors de la mise à jour.');
     }
   };
 
@@ -136,67 +167,95 @@ const UserManagement = () => {
         <div className="d-flex align-items-center">
             <Form.Control
               type="text"
-              placeholder="Rechercher un utilisateur..."
+              placeholder="Rechercher..."
               style={{ width: '300px', marginRight: '10px' }}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <Button variant="outline-secondary" onClick={fetchUsers}>Actualiser la liste</Button>
+            <Button variant="outline-secondary" onClick={fetchUsers}>Actualiser</Button>
         </div>
       </div>
 
       {error && <Alert variant="danger">{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
 
-      <Card className="mb-4 bg-light">
-        <Card.Body>
-          <Card.Title>Rôles disponibles :</Card.Title>
-          <ul className="mb-0">
-            <li><strong>Administrateur :</strong> Accès total (Voir, Ajouter, Modifier, Supprimer tout).</li>
-            <li><strong>Utilisateur :</strong> Accès limité (Voir, Ajouter, Modifier les données, mais <u>interdiction de supprimer</u>).</li>
-          </ul>
-        </Card.Body>
-      </Card>
-
       <Card className="mb-4">
         <Card.Body>
           <Card.Title>Ajouter un nouvel utilisateur</Card.Title>
-          <Form onSubmit={handleAddUser} className="row g-3">
-            <div className="col-md-3">
-              <Form.Control
-                placeholder="Nom d'utilisateur"
-                value={newUsername}
-                onChange={(e) => setNewUsername(e.target.value)}
-              />
+          <Form onSubmit={handleAddUser}>
+            <div className="row g-3">
+                <div className="col-md-4">
+                <Form.Group>
+                    <Form.Label>Nom d'utilisateur (Optionnel)</Form.Label>
+                    <Form.Control
+                        placeholder="Ex: Alpha"
+                        value={newUsername}
+                        onChange={(e) => setNewUsername(e.target.value)}
+                    />
+                </Form.Group>
+                </div>
+                <div className="col-md-4">
+                <Form.Group>
+                    <Form.Label>Email</Form.Label>
+                    <Form.Control
+                        type="email"
+                        placeholder="Ex: admin@example.com"
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                    />
+                </Form.Group>
+                </div>
+                <div className="col-md-4">
+                <Form.Group>
+                    <Form.Label>Téléphone (8 chiffres)</Form.Label>
+                    <Form.Control
+                        type="text"
+                        placeholder="Ex: 12345678"
+                        value={newPhone}
+                        onChange={(e) => setNewPhone(e.target.value)}
+                        maxLength={8}
+                    />
+                </Form.Group>
+                </div>
             </div>
-            <div className="col-md-3">
-              <Form.Control
-                type="password"
-                placeholder="Mot de passe"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-            </div>
-            <div className="col-md-3">
-              <Form.Select value={newRole} onChange={(e) => setNewRole(e.target.value)}>
-                <option value="utilisateur">Utilisateur</option>
-                <option value="administrateur">Administrateur</option>
-              </Form.Select>
-            </div>
-            <div className="col-md-3 d-flex align-items-end">
-              <Button variant="success" type="submit" className="px-3 btn-ajouter">
-                <span className="me-2">➕</span> Ajouter
-              </Button>
+            <div className="row g-3 mt-1">
+                <div className="col-md-4">
+                <Form.Group>
+                    <Form.Label>Mot de passe</Form.Label>
+                    <Form.Control
+                        type="password"
+                        placeholder="Mot de passe"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                    />
+                </Form.Group>
+                </div>
+                <div className="col-md-4">
+                <Form.Group>
+                    <Form.Label>Rôle</Form.Label>
+                    <Form.Select value={newRole} onChange={(e) => setNewRole(e.target.value)}>
+                        <option value="utilisateur">Utilisateur</option>
+                        <option value="administrateur">Administrateur</option>
+                    </Form.Select>
+                </Form.Group>
+                </div>
+                <div className="col-md-4 d-flex align-items-end">
+                <Button variant="success" type="submit" className="w-100">
+                    <span className="me-2">➕</span> Ajouter l'utilisateur
+                </Button>
+                </div>
             </div>
           </Form>
         </Card.Body>
       </Card>
 
-      <Table striped bordered hover>
+      <Table striped bordered hover responsive>
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Nom d'utilisateur</th>
+            <th>Nom / Identifier</th>
+            <th>Email</th>
+            <th>Téléphone</th>
             <th>Rôle</th>
             <th className="text-center">Actions</th>
           </tr>
@@ -204,18 +263,19 @@ const UserManagement = () => {
         <tbody>
           {filteredUsers.map((user) => (
             <tr key={user.id}>
-              <td>{user.id}</td>
-              <td>{user.username}</td>
+              <td>{user.username || '-'}</td>
+              <td>{user.email || '-'}</td>
+              <td>{user.phone || '-'}</td>
               <td>
                 <span className={`badge ${user.role === 'administrateur' ? 'bg-danger' : 'bg-primary'}`}>
                   {user.role}
                 </span>
               </td>
               <td className="text-center">
-                <Button variant="warning" size="sm" className="me-2 btn-modifier" onClick={() => handleEdit(user)} title="Modifier">
+                <Button variant="warning" size="sm" className="me-2" onClick={() => handleEdit(user)} title="Modifier">
                   ✏️
                 </Button>
-                <Button variant="danger" size="sm" className="btn-supprimer" onClick={() => handleDelete(user.id)} title="Supprimer">
+                <Button variant="danger" size="sm" onClick={() => handleDelete(user.id)} title="Supprimer">
                   🗑️
                 </Button>
               </td>
@@ -224,26 +284,48 @@ const UserManagement = () => {
         </tbody>
       </Table>
 
-      <Modal show={showEditModal} onHide={handleCloseEditModal}>
+      <Modal show={showEditModal} onHide={handleCloseEditModal} size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>Modifier Utilisateur</Modal.Title>
+          <Modal.Title>Modifier l'utilisateur</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          {error && <Alert variant="danger">{error}</Alert>}
           <Form onSubmit={handleSaveEdit}>
-            <Form.Group className="mb-3">
-              <Form.Label>Nom d'utilisateur</Form.Label>
-              <Form.Control
-                value={editedUsername}
-                onChange={(e) => setEditedUsername(e.target.value)}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Rôle</Form.Label>
-              <Form.Select value={editedRole} onChange={(e) => setEditedRole(e.target.value)}>
-                <option value="utilisateur">Utilisateur</option>
-                <option value="administrateur">Administrateur</option>
-              </Form.Select>
-            </Form.Group>
+            <div className="row g-3 mb-3">
+                <div className="col-md-6">
+                    <Form.Label>Nom d'utilisateur</Form.Label>
+                    <Form.Control
+                        value={editedUsername}
+                        onChange={(e) => setEditedUsername(e.target.value)}
+                    />
+                </div>
+                <div className="col-md-6">
+                    <Form.Label>Rôle</Form.Label>
+                    <Form.Select value={editedRole} onChange={(e) => setEditedRole(e.target.value)}>
+                        <option value="utilisateur">Utilisateur</option>
+                        <option value="administrateur">Administrateur</option>
+                    </Form.Select>
+                </div>
+            </div>
+            <div className="row g-3 mb-3">
+                <div className="col-md-6">
+                    <Form.Label>Email</Form.Label>
+                    <Form.Control
+                        type="email"
+                        value={editedEmail}
+                        onChange={(e) => setEditedEmail(e.target.value)}
+                    />
+                </div>
+                <div className="col-md-6">
+                    <Form.Label>Téléphone (8 chiffres)</Form.Label>
+                    <Form.Control
+                        type="text"
+                        value={editedPhone}
+                        onChange={(e) => setEditedPhone(e.target.value)}
+                        maxLength={8}
+                    />
+                </div>
+            </div>
             <Form.Group className="mb-3">
               <Form.Label>Nouveau mot de passe (laisser vide pour ne pas changer)</Form.Label>
               <Form.Control
@@ -252,9 +334,10 @@ const UserManagement = () => {
                 onChange={(e) => setEditedPassword(e.target.value)}
               />
             </Form.Group>
-            <Button variant="primary" type="submit">
-              Enregistrer les modifications
-            </Button>
+            <div className="d-flex justify-content-end gap-2">
+                <Button variant="secondary" onClick={handleCloseEditModal}>Annuler</Button>
+                <Button variant="primary" type="submit">Enregistrer</Button>
+            </div>
           </Form>
         </Modal.Body>
       </Modal>
