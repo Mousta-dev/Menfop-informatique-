@@ -15,6 +15,7 @@ i18n
       fr: {
         translation: {
           sidebar: {
+            menu: 'Navigation',
             dashboard: 'Tableau de bord',
             establishments: 'Établissement et service MENFOP',
             manage_equipment: 'Gérer Équipement',
@@ -22,6 +23,7 @@ i18n
             damaged_equipment: 'Matériel Endommagé',
             functional_equipment: 'Matériel Fonctionnel',
             repaired_equipment: 'Matériel Réparé',
+            missions_reports: 'Missions & Rapports',
             new_mission: 'Nouvelle Mission',
             view_missions: 'Voir Missions',
             write_report: 'Rédiger Rapport',
@@ -144,6 +146,7 @@ i18n
       en: {
         translation: {
           sidebar: {
+            menu: 'Navigation',
             dashboard: 'Dashboard',
             establishments: 'Establishments',
             manage_equipment: 'Manage Equipment',
@@ -151,6 +154,7 @@ i18n
             damaged_equipment: 'Damaged Equipment',
             functional_equipment: 'Functional Equipment',
             repaired_equipment: 'Repaired Equipment',
+            missions_reports: 'Missions & Reports',
             new_mission: 'New Mission',
             view_missions: 'View Missions',
             write_report: 'Write Report',

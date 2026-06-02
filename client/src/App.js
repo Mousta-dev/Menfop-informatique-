@@ -125,6 +125,37 @@ const AppContent = () => {
             </svg>
             {t('sidebar.manage_equipment')}
           </NavLink>
+
+          <div className="sidebar-section-label px-3 pt-3 pb-1 text-uppercase small fw-bold text-muted" style={{ fontSize: '0.7rem', letterSpacing: '0.05em' }}>
+            {t('sidebar.equipment_status') || 'États du Matériel'}
+          </div>
+          <NavLink to="/new-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-plus-square me-2" viewBox="0 0 16 16">
+              <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+              <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
+            </svg>
+            {t('sidebar.new_equipment')}
+          </NavLink>
+          <NavLink to="/damaged-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-exclamation-octagon me-2" viewBox="0 0 16 16">
+              <path d="M4.54.146A.5.5 0 0 1 4.893 0h6.214a.5.5 0 0 1 .353.146l4.394 4.394a.5.5 0 0 1 .146.353v6.214a.5.5 0 0 1-.146.353l-4.394 4.394a.5.5 0 0 1-.353.146H4.893a.5.5 0 0 1-.353-.146L.146 11.46A.5.5 0 0 1 0 11.107V4.893a.5.5 0 0 1 .146-.353zM5.1 1 1 5.1v5.8L5.1 15h5.8l4.1-4.1V5.1L10.9 1z"/>
+              <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+            </svg>
+            {t('sidebar.damaged_equipment')}
+          </NavLink>
+          <NavLink to="/functional-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-check-circle me-2" viewBox="0 0 16 16">
+              <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+              <path d="m10.97 4.97-.02.022-3.473 4.425-2.093-2.094a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+            </svg>
+            {t('sidebar.functional_equipment')}
+          </NavLink>
+          <NavLink to="/repaired-equipment" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-wrench-adjustable me-2" viewBox="0 0 16 16">
+              <path d="M16 4.5a4.5 4.5 0 0 1-1.703 3.526L13 10l2.677 2.677a2.5 2.5 0 1 1-3.536 3.536L9.5 13.5l-2.026 2.027a4.5 4.5 0 1 1-6.364-6.364l2.027-2.026L1.5 5.5a2.5 2.5 0 1 1 3.536-3.536L7.707 4.64a4.5 4.5 0 0 1 8.293 4.36zM15 4.5a3.5 3.5 0 1 0-7 0 3.5 3.5 0 0 0 7 0M4.146 12.354a.5.5 0 1 0-.708-.708.5.5 0 0 0 .708.708"/>
+            </svg>
+            {t('sidebar.repaired_equipment')}
+          </NavLink>
           
           <div className="sidebar-section-label px-3 pt-3 pb-1 text-uppercase small fw-bold text-muted" style={{ fontSize: '0.7rem', letterSpacing: '0.05em' }}>
             {t('sidebar.missions_reports') || 'Missions'}
