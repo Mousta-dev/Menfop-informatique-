@@ -33,8 +33,8 @@ const Register = () => {
         phone, 
         password 
       });
-      setSuccess('Compte créé avec succès ! Vous allez être redirigé vers la page de connexion.');
-      setTimeout(() => navigate('/login'), 3000);
+      setSuccess('Compte créé avec succès ! Redirection...');
+      setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
       setError(err.response?.data?.error || "Une erreur est survenue lors de l'inscription.");
     } finally {
@@ -43,21 +43,21 @@ const Register = () => {
   };
 
   return (
-    <Container className="d-flex align-items-center justify-content-center" style={{ minHeight: '100vh' }}>
-      <Card style={{ maxWidth: '450px', width: '100%' }} className="shadow-lg border-0">
-        <Card.Body className="p-4">
-          <div className="text-center mb-4">
-            <img src="/menfop.png" alt="Logo" style={{ height: '60px' }} className="mb-3" />
-            <h2 className="fw-bold">Créer un compte</h2>
-          </div>
+    <div className="login-container">
+      <div className="login-form">
+        <div className="text-center mb-4">
+            <img src="/menfop.png" alt="Logo" className="login-logo" />
+            <h2 className="mb-1">Créer un compte</h2>
+            <p className="login-subtitle">Rejoignez la plateforme Menfop-infos dès aujourd'hui.</p>
+        </div>
 
-          {error && <Alert variant="danger">{error}</Alert>}
-          {success && <Alert variant="success">{success}</Alert>}
+        {error && <Alert variant="danger" className="py-2 small border-0 shadow-sm mb-4 text-center">{error}</Alert>}
+        {success && <Alert variant="success" className="py-2 small border-0 shadow-sm mb-4 text-center">{success}</Alert>}
 
-          <Form onSubmit={handleRegister}>
-            <Form.Group className="mb-3">
-              <Form.Label>Nom d'utilisateur</Form.Label>
-              <Form.Control
+        <Form onSubmit={handleRegister}>
+            <div className="form-group">
+              <label>Nom d'utilisateur</label>
+              <input
                 type="text"
                 placeholder="Ex: Alpha"
                 value={username}
@@ -65,22 +65,22 @@ const Register = () => {
                 required
                 disabled={loading}
               />
-            </Form.Group>
+            </div>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Email</Form.Label>
-              <Form.Control
+            <div className="form-group">
+              <label>Email</label>
+              <input
                 type="email"
                 placeholder="Ex: nom@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
               />
-            </Form.Group>
+            </div>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Téléphone (8 chiffres)</Form.Label>
-              <Form.Control
+            <div className="form-group">
+              <label>Téléphone (8 chiffres)</label>
+              <input
                 type="text"
                 placeholder="Ex: 12345678"
                 value={phone}
@@ -88,32 +88,36 @@ const Register = () => {
                 maxLength={8}
                 disabled={loading}
               />
-            </Form.Group>
+            </div>
 
-            <Form.Group className="mb-4">
-              <Form.Label>Mot de passe</Form.Label>
-              <Form.Control
+            <div className="form-group">
+              <label>Mot de passe</label>
+              <input
                 type="password"
-                placeholder="Votre mot de passe"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
               />
-            </Form.Group>
-
-            <Button variant="primary" type="submit" className="w-100 py-2 mb-3" disabled={loading}>
-              {loading ? 'Création en cours...' : "S'inscrire"}
-            </Button>
-            
-            <div className="text-center">
-              <span className="text-muted">Déjà un compte ? </span>
-              <Link to="/login" className="text-decoration-none">Se connecter</Link>
             </div>
-          </Form>
-        </Card.Body>
-      </Card>
-    </Container>
+
+            <button type="submit" disabled={loading}>
+              {loading ? (
+                <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Création...
+                </>
+              ) : "S'inscrire gratuitement"}
+            </button>
+            
+            <div className="login-footer">
+              <span className="text-muted">Déjà un compte ? </span>
+              <Link to="/login">Se connecter</Link>
+            </div>
+        </Form>
+      </div>
+    </div>
   );
 };
 

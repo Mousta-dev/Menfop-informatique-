@@ -13,14 +13,11 @@ const MissionView = () => {
 
   const fetchMission = useCallback(async () => {
     try {
-      console.log('Fetching mission details for ID:', id);
       const response = await missionsApi.getMission(id);
-      console.log('Mission response:', response.data);
       setMission(response.data.data);
     } catch (err) {
       console.error('Error fetching mission:', err);
-      const serverError = err.response?.data?.error || err.response?.statusText || err.message;
-      setError(`Impossible de charger les détails de la mission : ${serverError}`);
+      setError(`Impossible de charger les détails de la mission.`);
       setMission(null);
     }
   }, [id]);
@@ -31,75 +28,106 @@ const MissionView = () => {
 
   if (error) {
     return (
-      <div className="mt-4">
-        <Alert variant="danger">{error}</Alert>
-        <Button variant="secondary" onClick={() => navigate('/missions')}>Retour à la liste</Button>
-      </div>
+      <Container className="py-5 text-center">
+        <Alert variant="danger" className="border-0 shadow-sm mb-4">{error}</Alert>
+        <Button variant="primary" onClick={() => navigate('/missions')}>Retour à la liste</Button>
+      </Container>
     );
   }
 
   if (!mission) {
-    return <Alert variant="info" className="mt-4">Chargement des détails de la mission...</Alert>;
+    return (
+        <Container className="py-5 text-center text-muted">
+            <div className="spinner-border text-primary mb-3" role="status"></div>
+            <p>Chargement des détails...</p>
+        </Container>
+    );
   }
 
+  const getStatusBadge = (status) => {
+    switch (status) {
+        case 'completed': return <Badge bg="success">TERMINÉE</Badge>;
+        case 'in_progress': return <Badge bg="warning" text="dark">EN COURS</Badge>;
+        case 'pending': return <Badge bg="info">EN ATTENTE</Badge>;
+        default: return <Badge bg="secondary">{status.toUpperCase()}</Badge>;
+    }
+  };
+
   return (
-    <div className="mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>Détails de la Mission #{mission.id}</h1>
+    <Container fluid className="py-4">
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
-          <Button variant="outline-primary" className="me-2 no-print" onClick={() => window.print()}>
-            🖨️ {t('common.print') || 'Imprimer'}
+          <h1 className="mb-1">Détails de la Mission #{mission.id.toString().padStart(4, '0')}</h1>
+          <p className="text-muted mb-0">Rapport d'intervention et suivi technique.</p>
+        </div>
+        <div className="d-flex gap-2 no-print">
+          <Button variant="outline-primary" onClick={() => window.print()} className="fw-bold px-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-printer me-2" viewBox="0 0 16 16">
+              <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1"/>
+              <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1"/>
+            </svg>
+            Imprimer
           </Button>
-          <Button variant="secondary" className="no-print" onClick={() => navigate('/missions')}>Retour à la liste</Button>
+          <Button variant="outline-secondary" onClick={() => navigate('/missions')} className="fw-bold">Retour</Button>
         </div>
       </div>
 
-      <Card className="mb-4 shadow-sm">
-        <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
-          <h4 className="mb-0">{mission.name}</h4>
-          <Badge bg={mission.status === 'completed' ? 'success' : 'warning'} className="p-2">
-            {mission.status.toUpperCase()}
-          </Badge>
-        </Card.Header>
-        <Card.Body>
-          <Card.Title className="text-muted mb-3">Description</Card.Title>
-          <p className="border p-4 rounded bg-light" style={{ whiteSpace: 'pre-wrap', minHeight: '100px' }}>
-            {mission.description || 'Aucune description fournie.'}
-          </p>
-          
-          <h5 className="mt-4 mb-3">Interventions sur Matériel</h5>
-          {mission.interventions && mission.interventions.length > 0 ? (
-            <Table striped bordered hover responsive>
-              <thead className="bg-light">
-                <tr>
-                  <th>Matériel</th>
-                  <th>Description</th>
-                  <th>Résultat / État</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mission.interventions.map((inter, idx) => (
-                  <tr key={idx}>
-                    <td><strong>{inter.equipment_name || `ID: ${inter.equipment_id}`}</strong></td>
-                    <td>{inter.description}</td>
-                    <td>{inter.result}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          ) : (
-            <p className="text-muted italic">Aucune intervention enregistrée pour cette mission.</p>
-          )}
-
-          <hr />
-          <div className="d-flex justify-content-between">
-            <small className="text-muted">
-              <strong>Créé le :</strong> {new Date(mission.created_at).toLocaleString()}
-            </small>
+      <Card className="border-0 shadow-sm overflow-hidden mb-4">
+        <Card.Header className="bg-primary text-white p-4 border-0">
+          <div className="d-flex justify-content-between align-items-center">
+            <h4 className="mb-0 fw-bold">{mission.name}</h4>
+            {getStatusBadge(mission.status)}
           </div>
+        </Card.Header>
+        <Card.Body className="p-4">
+          <Row className="g-4">
+            <Col xs={12} lg={4}>
+                <div className="mb-4 p-3 bg-light rounded-4 border-0">
+                    <label className="small fw-bold text-muted text-uppercase mb-1">Date de création</label>
+                    <p className="fw-bold mb-0">{new Date(mission.created_at).toLocaleString()}</p>
+                </div>
+                <div>
+                    <label className="small fw-bold text-muted text-uppercase mb-2 ms-1">Description / Objectif</label>
+                    <div className="bg-light p-4 rounded-4 border-0 text-muted" style={{ whiteSpace: 'pre-wrap', minHeight: '150px', fontSize: '0.95rem' }}>
+                        {mission.description || 'Aucune description fournie.'}
+                    </div>
+                </div>
+            </Col>
+            <Col xs={12} lg={8}>
+                <label className="small fw-bold text-muted text-uppercase mb-3 ms-1">Interventions détaillées</label>
+                {mission.interventions && mission.interventions.length > 0 ? (
+                    <div className="border rounded-4 overflow-hidden">
+                        <Table hover className="align-middle mb-0">
+                            <thead className="table-light">
+                                <tr>
+                                    <th className="py-3 px-4 border-0 small text-uppercase fw-bold text-muted">Matériel</th>
+                                    <th className="py-3 px-4 border-0 small text-uppercase fw-bold text-muted">Description</th>
+                                    <th className="py-3 px-4 border-0 small text-uppercase fw-bold text-muted">Résultat</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {mission.interventions.map((inter, idx) => (
+                                    <tr key={idx}>
+                                        <td className="py-3 px-4 border-bottom-0 fw-bold text-primary">{inter.equipment_name || `ID: ${inter.equipment_id}`}</td>
+                                        <td className="py-3 px-4 border-bottom-0 text-muted">{inter.description}</td>
+                                        <td className="py-3 px-4 border-bottom-0">
+                                            <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2">{inter.result}</span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    </div>
+                ) : (
+                    <div className="text-center py-5 bg-light rounded-4 border border-dashed">
+                        <p className="text-muted mb-0">Aucune intervention enregistrée pour cette mission.</p>
+                    </div>
+                )}
+            </Col>
+          </Row>
         </Card.Body>
       </Card>
-    </div>
+    </Container>
   );
 };
 

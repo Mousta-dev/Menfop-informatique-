@@ -161,187 +161,221 @@ const UserManagement = () => {
   };
 
   return (
-    <div className="mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>Gestion des Utilisateurs</h1>
-        <div className="d-flex align-items-center">
-            <Form.Control
-              type="text"
-              placeholder="Rechercher..."
-              style={{ width: '300px', marginRight: '10px' }}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <Button variant="outline-secondary" onClick={fetchUsers}>Actualiser</Button>
+    <Container fluid className="py-4">
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+          <h1 className="mb-1">Gestion des Utilisateurs</h1>
+          <p className="text-muted mb-0">Gérez les accès et les permissions de votre équipe.</p>
+        </div>
+        <div className="d-flex gap-2 align-items-center no-print">
+            <div className="position-relative" style={{ minWidth: '280px' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-search position-absolute top-50 translate-middle-y ms-3 text-muted" viewBox="0 0 16 16">
+                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
+                </svg>
+                <Form.Control
+                type="text"
+                placeholder="Rechercher..."
+                className="ps-5 py-2"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            <Button variant="outline-primary" onClick={fetchUsers} className="py-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-arrow-clockwise me-1" viewBox="0 0 16 16">
+                    <path fillRule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/>
+                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/>
+                </svg>
+            </Button>
         </div>
       </div>
 
-      {error && <Alert variant="danger">{error}</Alert>}
-      {success && <Alert variant="success">{success}</Alert>}
+      {error && <Alert variant="danger" className="border-0 shadow-sm mb-4" dismissible onClose={() => setError('')}>{error}</Alert>}
+      {success && <Alert variant="success" className="border-0 shadow-sm mb-4" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-      <Card className="mb-4">
-        <Card.Body>
-          <Card.Title>Ajouter un nouvel utilisateur</Card.Title>
+      <Card className="border-0 shadow-sm mb-4 no-print">
+        <Card.Header className="bg-white border-0 pt-4 px-4 pb-0">
+          <Card.Title className="fw-bold">Ajouter un nouvel utilisateur</Card.Title>
+        </Card.Header>
+        <Card.Body className="p-4">
           <Form onSubmit={handleAddUser}>
-            <div className="row g-3">
-                <div className="col-md-4">
-                <Form.Group>
-                    <Form.Label>Nom d'utilisateur (Optionnel)</Form.Label>
+            <Row className="g-3 mb-3">
+                <Col md={4}>
+                    <Form.Label className="small fw-bold text-muted text-uppercase">Nom d'utilisateur (Optionnel)</Form.Label>
                     <Form.Control
                         placeholder="Ex: Alpha"
                         value={newUsername}
                         onChange={(e) => setNewUsername(e.target.value)}
+                        className="py-2"
                     />
-                </Form.Group>
-                </div>
-                <div className="col-md-4">
-                <Form.Group>
-                    <Form.Label>Email</Form.Label>
+                </Col>
+                <Col md={4}>
+                    <Form.Label className="small fw-bold text-muted text-uppercase">Email</Form.Label>
                     <Form.Control
                         type="email"
                         placeholder="Ex: admin@example.com"
                         value={newEmail}
                         onChange={(e) => setNewEmail(e.target.value)}
+                        className="py-2"
                     />
-                </Form.Group>
-                </div>
-                <div className="col-md-4">
-                <Form.Group>
-                    <Form.Label>Téléphone (8 chiffres)</Form.Label>
+                </Col>
+                <Col md={4}>
+                    <Form.Label className="small fw-bold text-muted text-uppercase">Téléphone (8 chiffres)</Form.Label>
                     <Form.Control
                         type="text"
                         placeholder="Ex: 12345678"
                         value={newPhone}
                         onChange={(e) => setNewPhone(e.target.value)}
                         maxLength={8}
+                        className="py-2"
                     />
-                </Form.Group>
-                </div>
-            </div>
-            <div className="row g-3 mt-1">
-                <div className="col-md-4">
-                <Form.Group>
-                    <Form.Label>Mot de passe</Form.Label>
+                </Col>
+            </Row>
+            <Row className="g-3 align-items-end">
+                <Col md={4}>
+                    <Form.Label className="small fw-bold text-muted text-uppercase">Mot de passe</Form.Label>
                     <Form.Control
                         type="password"
                         placeholder="Mot de passe"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         required
+                        className="py-2"
                     />
-                </Form.Group>
-                </div>
-                <div className="col-md-4">
-                <Form.Group>
-                    <Form.Label>Rôle</Form.Label>
-                    <Form.Select value={newRole} onChange={(e) => setNewRole(e.target.value)}>
+                </Col>
+                <Col md={4}>
+                    <Form.Label className="small fw-bold text-muted text-uppercase">Rôle</Form.Label>
+                    <Form.Select value={newRole} onChange={(e) => setNewRole(e.target.value)} className="py-2">
                         <option value="utilisateur">Utilisateur</option>
                         <option value="administrateur">Administrateur</option>
                     </Form.Select>
-                </Form.Group>
-                </div>
-                <div className="col-md-4 d-flex align-items-end">
-                <Button variant="success" type="submit" className="w-100">
-                    <span className="me-2">➕</span> Ajouter l'utilisateur
-                </Button>
-                </div>
-            </div>
+                </Col>
+                <Col md={4}>
+                    <Button variant="primary" type="submit" className="w-100 py-2 fw-bold">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-person-plus-fill me-2" viewBox="0 0 16 16">
+                            <path d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>
+                            <path fillRule="evenodd" d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5"/>
+                        </svg>
+                        Ajouter l'utilisateur
+                    </Button>
+                </Col>
+            </Row>
           </Form>
         </Card.Body>
       </Card>
 
-      <Table striped bordered hover responsive>
-        <thead>
-          <tr>
-            <th>Nom / Identifier</th>
-            <th>Email</th>
-            <th>Téléphone</th>
-            <th>Rôle</th>
-            <th className="text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredUsers.map((user) => (
-            <tr key={user.id}>
-              <td>{user.username || '-'}</td>
-              <td>{user.email || '-'}</td>
-              <td>{user.phone || '-'}</td>
-              <td>
-                <span className={`badge ${user.role === 'administrateur' ? 'bg-danger' : 'bg-primary'}`}>
-                  {user.role}
-                </span>
-              </td>
-              <td className="text-center">
-                <Button variant="warning" size="sm" className="me-2" onClick={() => handleEdit(user)} title="Modifier">
-                  ✏️
-                </Button>
-                <Button variant="danger" size="sm" onClick={() => handleDelete(user.id)} title="Supprimer">
-                  🗑️
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+      <Card className="border-0 shadow-sm overflow-hidden">
+        <div className="table-responsive">
+          <Table hover className="align-middle mb-0">
+            <thead className="table-light">
+              <tr>
+                <th className="py-3 px-4 text-muted small text-uppercase fw-bold">Nom / Identifier</th>
+                <th className="py-3 px-4 text-muted small text-uppercase fw-bold">Email</th>
+                <th className="py-3 px-4 text-muted small text-uppercase fw-bold">Téléphone</th>
+                <th className="py-3 px-4 text-muted small text-uppercase fw-bold">Rôle</th>
+                <th className="py-3 px-4 text-end text-muted small text-uppercase fw-bold no-print">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.length === 0 ? (
+                <tr>
+                    <td colSpan="5" className="text-center py-5 text-muted">Aucun utilisateur trouvé.</td>
+                </tr>
+              ) : (
+                filteredUsers.map((user) => (
+                  <tr key={user.id}>
+                    <td className="py-3 px-4 fw-bold">{user.username || '-'}</td>
+                    <td className="py-3 px-4 text-muted small fw-medium">{user.email || '-'}</td>
+                    <td className="py-3 px-4 text-muted small fw-medium">{user.phone || '-'}</td>
+                    <td className="py-3 px-4">
+                      <span className={`badge ${user.role === 'administrateur' ? 'bg-danger' : 'bg-primary'}`}>
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-end no-print">
+                      <div className="d-flex justify-content-end gap-2">
+                        <Button variant="outline-warning" size="sm" onClick={() => handleEdit(user)} title="Modifier">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" className="bi bi-pencil" viewBox="0 0 16 16">
+                            <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z"/>
+                          </svg>
+                        </Button>
+                        <Button variant="outline-danger" size="sm" onClick={() => handleDelete(user.id)} title="Supprimer">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" className="bi bi-trash" viewBox="0 0 16 16">
+                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                          </svg>
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </Table>
+        </div>
+      </Card>
 
-      <Modal show={showEditModal} onHide={handleCloseEditModal} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>Modifier l'utilisateur</Modal.Title>
+      <Modal show={showEditModal} onHide={handleCloseEditModal} size="lg" centered>
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title className="fw-bold">Modifier l'utilisateur</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          {error && <Alert variant="danger">{error}</Alert>}
+        <Modal.Body className="p-4">
+          {error && <Alert variant="danger" className="border-0 shadow-sm">{error}</Alert>}
           <Form onSubmit={handleSaveEdit}>
-            <div className="row g-3 mb-3">
-                <div className="col-md-6">
-                    <Form.Label>Nom d'utilisateur</Form.Label>
+            <Row className="g-3 mb-3">
+                <Col md={6}>
+                    <Form.Label className="small fw-bold text-muted text-uppercase">Nom d'utilisateur</Form.Label>
                     <Form.Control
                         value={editedUsername}
                         onChange={(e) => setEditedUsername(e.target.value)}
+                        className="py-2"
                     />
-                </div>
-                <div className="col-md-6">
-                    <Form.Label>Rôle</Form.Label>
-                    <Form.Select value={editedRole} onChange={(e) => setEditedRole(e.target.value)}>
+                </Col>
+                <Col md={6}>
+                    <Form.Label className="small fw-bold text-muted text-uppercase">Rôle</Form.Label>
+                    <Form.Select value={editedRole} onChange={(e) => setEditedRole(e.target.value)} className="py-2">
                         <option value="utilisateur">Utilisateur</option>
                         <option value="administrateur">Administrateur</option>
                     </Form.Select>
-                </div>
-            </div>
-            <div className="row g-3 mb-3">
-                <div className="col-md-6">
-                    <Form.Label>Email</Form.Label>
+                </Col>
+            </Row>
+            <Row className="g-3 mb-3">
+                <Col md={6}>
+                    <Form.Label className="small fw-bold text-muted text-uppercase">Email</Form.Label>
                     <Form.Control
                         type="email"
                         value={editedEmail}
                         onChange={(e) => setEditedEmail(e.target.value)}
+                        className="py-2"
                     />
-                </div>
-                <div className="col-md-6">
-                    <Form.Label>Téléphone (8 chiffres)</Form.Label>
+                </Col>
+                <Col md={6}>
+                    <Form.Label className="small fw-bold text-muted text-uppercase">Téléphone (8 chiffres)</Form.Label>
                     <Form.Control
                         type="text"
                         value={editedPhone}
                         onChange={(e) => setEditedPhone(e.target.value)}
                         maxLength={8}
+                        className="py-2"
                     />
-                </div>
-            </div>
-            <Form.Group className="mb-3">
-              <Form.Label>Nouveau mot de passe (laisser vide pour ne pas changer)</Form.Label>
+                </Col>
+            </Row>
+            <Form.Group className="mb-4">
+              <Form.Label className="small fw-bold text-muted text-uppercase">Nouveau mot de passe (laisser vide pour ne pas changer)</Form.Label>
               <Form.Control
                 type="password"
                 value={editedPassword}
                 onChange={(e) => setEditedPassword(e.target.value)}
+                className="py-2"
               />
             </Form.Group>
             <div className="d-flex justify-content-end gap-2">
-                <Button variant="secondary" onClick={handleCloseEditModal}>Annuler</Button>
-                <Button variant="primary" type="submit">Enregistrer</Button>
+                <Button variant="outline-secondary" onClick={handleCloseEditModal} className="px-4 fw-bold">Annuler</Button>
+                <Button variant="primary" type="submit" className="px-4 fw-bold">Enregistrer</Button>
             </div>
           </Form>
         </Modal.Body>
       </Modal>
-    </div>
+    </Container>
   );
 };
 
