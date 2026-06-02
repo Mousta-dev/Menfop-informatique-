@@ -1,9 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Form, Button, Alert, Card } from 'react-bootstrap';
-import { useTranslation } from 'react-i18next';
-import api from '../api';
-
-import React, { useState, useEffect, useMemo } from 'react';
 import { Form, Button, Alert, Card, Container, Row, Col, InputGroup } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import api from '../api';

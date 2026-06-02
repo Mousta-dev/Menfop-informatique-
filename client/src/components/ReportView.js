@@ -1,17 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Alert, Button } from 'react-bootstrap';
-import { useTranslation } from 'react-i18next';
-import api from '../api';
-import { useParams } from 'react-router-dom';
-
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Alert, Button, Container, Row, Col, InputGroup } from 'react-bootstrap';
+import { Card, Alert, Button, Container, Row, Col, InputGroup, Form } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { useParams, useNavigate } from 'react-router-dom';
 
 const ReportView = () => {
-  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const [report, setReport] = useState(null);
@@ -122,7 +115,5 @@ const ReportView = () => {
     </Container>
   );
 };
-
-export default ReportView;
 
 export default ReportView;

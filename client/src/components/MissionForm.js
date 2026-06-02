@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import { Form, Button, Alert, Card, Row, Col, Table } from 'react-bootstrap';
-import { missionsApi } from '../api';
-import { Link } from 'react-router-dom';
-
-import React, { useState } from 'react';
-import { Form, Button, Alert, Card, Row, Col, Table, Container, InputGroup } from 'react-bootstrap';
+import { Form, Button, Alert, Card, Row, Col, Table, Container } from 'react-bootstrap';
 import { missionsApi } from '../api';
 import { Link } from 'react-router-dom';
 

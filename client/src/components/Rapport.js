@@ -1,9 +1,4 @@
 import React, { useState } from 'react';
-import { Form, Button, Alert, Card } from 'react-bootstrap';
-import api from '../api';
-import { Link } from 'react-router-dom'; // Import Link
-
-import React, { useState } from 'react';
 import { Form, Button, Alert, Card, Container, Row, Col } from 'react-bootstrap';
 import api from '../api';
 import { Link } from 'react-router-dom';
@@ -97,7 +92,5 @@ const Rapport = () => {
     </Container>
   );
 };
-
-export default Rapport;
 
 export default Rapport;

@@ -1,17 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Alert, Button, Form } from 'react-bootstrap';
-import api from '../api';
-import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-
-import React, { useState, useEffect } from 'react';
 import { Card, Table, Alert, Button, Form, Container, InputGroup } from 'react-bootstrap';
 import api from '../api';
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 
 const ReportsList = () => {
-  const { t } = useTranslation();
   const [reports, setReports] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
@@ -104,7 +96,8 @@ const ReportsList = () => {
                       </Button>
                     </td>
                   </tr>
-                ))}
+                ))
+              )}
             </tbody>
           </Table>
         </div>

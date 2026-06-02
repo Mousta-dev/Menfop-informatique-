@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Form, Alert, Modal, Card } from 'react-bootstrap';
+import { Table, Button, Form, Alert, Modal, Card, Container, Row, Col } from 'react-bootstrap';
 import api from '../api';
 
 const UserManagement = () => {

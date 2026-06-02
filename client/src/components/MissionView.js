@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Alert, Button, Badge, Table } from 'react-bootstrap';
+import { Card, Alert, Button, Badge, Table, Container, Row, Col } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { missionsApi } from '../api';
 import { useParams, useNavigate } from 'react-router-dom';
 
 const MissionView = () => {
-  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const [mission, setMission] = useState(null);

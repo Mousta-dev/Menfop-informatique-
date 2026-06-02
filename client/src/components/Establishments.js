@@ -1,9 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Form, Alert, Modal } from 'react-bootstrap';
-import { useTranslation } from 'react-i18next';
-import api from '../api';
-
-import React, { useState, useEffect } from 'react';
 import { Table, Button, Form, Alert, Modal, Container, Card, Row, Col, InputGroup } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
@@ -265,7 +260,5 @@ const Establishments = ({ userRole }) => {
     </Container>
   );
 };
-
-export default Establishments;
 
 export default Establishments;
