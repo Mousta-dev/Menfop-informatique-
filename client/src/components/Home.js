@@ -171,13 +171,13 @@ const Home = () => {
         </Col>
         <Col xs={12} lg={8}>
           <Card className="h-100 border-0 shadow-sm">
-            <Card.Header className="bg-white border-0 pt-4 px-4 pb-0">
+            <Card.Header className="border-0 pt-4 px-4 pb-0">
               <Card.Title className="fw-bold">{t('dashboard.by_status')}</Card.Title>
             </Card.Header>
             <Card.Body className="p-4">
               <div className="table-responsive">
                 <Table hover className="align-middle mb-0">
-                  <thead className="table-light">
+                  <thead>
                     <tr>
                       <th>{t('common.status')}</th>
                       <th className="text-end">{t('dashboard.count')}</th>
@@ -228,7 +228,7 @@ const Home = () => {
       <Row className="g-4 mb-4">
         <Col xs={12} xl={5}>
           <Card className="h-100 border-0 shadow-sm">
-            <Card.Header className="bg-white border-0 pt-4 px-4 pb-2">
+            <Card.Header className="border-0 pt-4 px-4 pb-2">
               <Card.Title className="fw-bold">{t('dashboard.status_distribution')}</Card.Title>
             </Card.Header>
             <Card.Body className="p-4">
@@ -255,7 +255,7 @@ const Home = () => {
         </Col>
         <Col xs={12} xl={7}>
           <Card className="h-100 border-0 shadow-sm">
-            <Card.Header className="bg-white border-0 pt-4 px-4 pb-2">
+            <Card.Header className="border-0 pt-4 px-4 pb-2">
               <Card.Title className="fw-bold">{t('dashboard.per_establishment')}</Card.Title>
             </Card.Header>
             <Card.Body className="p-4">
@@ -278,13 +278,13 @@ const Home = () => {
       </Row>
 
       <Card className="border-0 shadow-sm mb-4">
-        <Card.Header className="bg-white border-0 d-flex justify-content-between align-items-center pt-4 px-4">
+        <Card.Header className="border-0 d-flex justify-content-between align-items-center pt-4 px-4">
           <Card.Title className="fw-bold mb-0">{t('dashboard.table_view')}</Card.Title>
         </Card.Header>
         <Card.Body className="p-4">
           <div className="table-responsive">
             <Table hover className="align-middle mb-0">
-              <thead className="table-light">
+              <thead>
                 <tr>
                   <th className="py-3 px-4">{t('sidebar.establishments')}</th>
                   <th className="py-3 px-4 text-center">{t('dashboard.count')}</th>

@@ -100,7 +100,7 @@ const NewEquipment = () => {
       <Row className="g-4">
         <Col xs={12} lg={5} className="no-print">
             <Card className="border-0 shadow-sm h-100">
-                <Card.Header className="bg-white border-0 pt-4 px-4 pb-0">
+                <Card.Header className="border-0 pt-4 px-4 pb-0">
                     <Card.Title className="fw-bold">Ajouter un équipement</Card.Title>
                 </Card.Header>
                 <Card.Body className="p-4">
@@ -108,7 +108,7 @@ const NewEquipment = () => {
                         <Form.Group className="mb-4">
                             <Form.Label className="small fw-bold text-muted text-uppercase">Rechercher l'établissement</Form.Label>
                             <InputGroup>
-                                <InputGroup.Text className="bg-white border-end-0">
+                                <InputGroup.Text className="border-end-0">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" className="bi bi-search text-muted" viewBox="0 0 16 16">
                                         <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
                                     </svg>
@@ -173,7 +173,7 @@ const NewEquipment = () => {
         
         <Col xs={12} lg={7}>
             <Card className="border-0 shadow-sm h-100">
-                <Card.Header className="bg-white border-0 pt-4 px-4 pb-2">
+                <Card.Header className="border-0 pt-4 px-4 pb-2">
                     <Card.Title className="fw-bold">Aide à l'enregistrement</Card.Title>
                 </Card.Header>
                 <Card.Body className="p-4">

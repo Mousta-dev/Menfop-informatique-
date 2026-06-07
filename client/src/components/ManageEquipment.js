@@ -171,7 +171,7 @@ const ManageEquipment = ({ userRole }) => {
             <Col xs={12} lg={4}>
               <Form.Label className="small fw-bold text-muted text-uppercase">{t('common.search')}</Form.Label>
               <InputGroup>
-                <InputGroup.Text className="bg-white border-end-0">
+                <InputGroup.Text className="border-end-0">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" className="bi bi-search text-muted" viewBox="0 0 16 16">
                     <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
                   </svg>
@@ -211,7 +211,7 @@ const ManageEquipment = ({ userRole }) => {
       <Card className="border-0 shadow-sm overflow-hidden">
         <div className="table-responsive">
           <Table hover className="align-middle mb-0">
-            <thead className="table-light">
+            <thead>
               <tr>
                 <th className="px-4 py-3 text-muted small text-uppercase fw-bold" style={{ width: '80px' }}>ID</th>
                 <th className="py-3 text-muted small text-uppercase fw-bold">{t('common.name')}</th>

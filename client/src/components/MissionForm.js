@@ -88,7 +88,7 @@ const MissionForm = () => {
         <Row className="g-4">
           <Col xs={12} lg={4}>
             <Card className="border-0 shadow-sm h-100">
-              <Card.Header className="bg-white border-0 pt-4 px-4 pb-0">
+              <Card.Header className="border-0 pt-4 px-4 pb-0">
                 <Card.Title className="fw-bold">Informations Générales</Card.Title>
               </Card.Header>
               <Card.Body className="p-4">

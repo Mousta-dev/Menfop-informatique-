@@ -59,7 +59,7 @@ const Rapport = () => {
       <Row className="justify-content-center">
         <Col xs={12} lg={10}>
           <Card className="border-0 shadow-sm overflow-hidden">
-            <Card.Header className="bg-white border-0 pt-4 px-4 pb-0">
+            <Card.Header className="border-0 pt-4 px-4 pb-0">
               <Card.Title className="fw-bold">Nouveau Compte-rendu</Card.Title>
             </Card.Header>
             <Card.Body className="p-4">

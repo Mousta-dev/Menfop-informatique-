@@ -130,7 +130,7 @@ const Establishments = ({ userRole }) => {
       <Row className="g-4 mb-4">
         <Col xs={12} lg={4} className="no-print">
           <Card className="border-0 shadow-sm h-100">
-            <Card.Header className="bg-white border-0 pt-4 px-4 pb-0">
+            <Card.Header className="border-0 pt-4 px-4 pb-0">
               <Card.Title className="fw-bold">{t('establishments.add_new')}</Card.Title>
             </Card.Header>
             <Card.Body className="p-4">
@@ -160,11 +160,11 @@ const Establishments = ({ userRole }) => {
         
         <Col xs={12} lg={8}>
           <Card className="border-0 shadow-sm">
-            <Card.Header className="bg-white border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pt-4 px-4 pb-0">
+            <Card.Header className="border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pt-4 px-4 pb-0">
               <Card.Title className="fw-bold mb-0">{t('establishments.current')}</Card.Title>
               <div className="no-print" style={{ minWidth: '280px' }}>
                 <InputGroup size="sm">
-                  <InputGroup.Text className="bg-white border-end-0">
+                  <InputGroup.Text className="border-end-0">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" className="bi bi-search text-muted" viewBox="0 0 16 16">
                       <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
                     </svg>
@@ -186,7 +186,7 @@ const Establishments = ({ userRole }) => {
             <Card.Body className="p-4">
               <div className="table-responsive">
                 <Table hover className="align-middle mb-0">
-                  <thead className="table-light">
+                  <thead>
                     <tr>
                       <th className="py-3 px-4">ID</th>
                       <th className="py-3 px-4">{t('common.name')}</th>

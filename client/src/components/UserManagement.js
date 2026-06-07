@@ -193,7 +193,7 @@ const UserManagement = () => {
       {success && <Alert variant="success" className="border-0 shadow-sm mb-4" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
       <Card className="border-0 shadow-sm mb-4 no-print">
-        <Card.Header className="bg-white border-0 pt-4 px-4 pb-0">
+        <Card.Header className="border-0 pt-4 px-4 pb-0">
           <Card.Title className="fw-bold">Ajouter un nouvel utilisateur</Card.Title>
         </Card.Header>
         <Card.Body className="p-4">
@@ -266,7 +266,7 @@ const UserManagement = () => {
       <Card className="border-0 shadow-sm overflow-hidden">
         <div className="table-responsive">
           <Table hover className="align-middle mb-0">
-            <thead className="table-light">
+            <thead>
               <tr>
                 <th className="py-3 px-4 text-muted small text-uppercase fw-bold">Nom / Identifier</th>
                 <th className="py-3 px-4 text-muted small text-uppercase fw-bold">Email</th>

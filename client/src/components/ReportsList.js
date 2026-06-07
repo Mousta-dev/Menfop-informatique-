@@ -39,7 +39,7 @@ const ReportsList = () => {
         <div className="d-flex gap-2 no-print align-items-center">
             <div className="position-relative" style={{ minWidth: '300px' }}>
                 <InputGroup size="sm">
-                    <InputGroup.Text className="bg-white border-end-0">
+                    <InputGroup.Text className="border-end-0">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" className="bi bi-search text-muted" viewBox="0 0 16 16">
                             <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
                         </svg>
@@ -67,7 +67,7 @@ const ReportsList = () => {
       <Card className="border-0 shadow-sm overflow-hidden">
         <div className="table-responsive">
           <Table hover className="align-middle mb-0">
-            <thead className="table-light">
+            <thead>
               <tr>
                 <th className="py-3 px-4 text-muted small text-uppercase fw-bold">ID</th>
                 <th className="py-3 px-4 text-muted small text-uppercase fw-bold">Extrait du contenu</th>

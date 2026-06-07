@@ -46,7 +46,7 @@ const MissionView = () => {
   const getStatusBadge = (status) => {
     switch (status) {
         case 'completed': return <Badge bg="success">TERMINÉE</Badge>;
-        case 'in_progress': return <Badge bg="warning" text="dark">EN COURS</Badge>;
+        case 'in_progress': return <Badge bg="warning">EN COURS</Badge>;
         case 'pending': return <Badge bg="info">EN ATTENTE</Badge>;
         default: return <Badge bg="secondary">{status.toUpperCase()}</Badge>;
     }
@@ -97,7 +97,7 @@ const MissionView = () => {
                 {mission.interventions && mission.interventions.length > 0 ? (
                     <div className="border rounded-4 overflow-hidden">
                         <Table hover className="align-middle mb-0">
-                            <thead className="table-light">
+                            <thead>
                                 <tr>
                                     <th className="py-3 px-4 border-0 small text-uppercase fw-bold text-muted">Matériel</th>
                                     <th className="py-3 px-4 border-0 small text-uppercase fw-bold text-muted">Description</th>
