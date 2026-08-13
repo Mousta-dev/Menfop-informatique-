@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, NavLink, Link, Navigate, useLocation } from 'react-router-dom';
 import { Container, Button, Offcanvas, ButtonGroup } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +19,7 @@ import UserManagement from './components/UserManagement';
 import Login from './components/Login';
 import Register from './components/Register';
 import './App.css';
+import axios from 'axios';
 
 const AppContent = () => {
   const { t, i18n } = useTranslation();
@@ -28,14 +29,7 @@ const AppContent = () => {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const location = useLocation();
 
-  useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    const role = sessionStorage.getItem('role');
-    if (token) {
-      setIsAuthenticated(true);
-      setUserRole(role);
-    }
-  }, []);
+  useEffect(()=>{},[]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -98,6 +92,23 @@ const AppContent = () => {
 
   const SidebarContent = () => {
     const username = sessionStorage.getItem('username');
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    useEffect(() => {
+      const fetchUnread = async () => {
+        const token = sessionStorage.getItem('token');
+        if (!token) return;
+        try {
+          const res = await axios.get('/api/notifications', { headers: { Authorization: 'Bearer ' + token } });
+          if (res.data && res.data.data) {
+            const unread = res.data.data.filter(n => !n.read).length;
+            setUnreadCount(unread);
+          }
+        } catch (e) { /* ignore */ }
+      };
+      fetchUnread();
+    }, []);
+
     return (
       <>
         <div className="sidebar-header">
@@ -136,6 +147,7 @@ const AppContent = () => {
             </svg>
             {t('sidebar.dashboard')}
           </NavLink>
+
           <NavLink to="/establishments" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-building me-2" viewBox="0 0 16 16">
               <path d="M4 2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zM4 5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zM4 8.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zM4 11.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/>
@@ -347,3 +359,7 @@ const App = () => {
 };
 
 export default App;
+
+
+
+

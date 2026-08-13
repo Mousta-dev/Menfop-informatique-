@@ -55,6 +55,11 @@ const ensureTables = async () => {
             await sql`CREATE TABLE IF NOT EXISTS reports (id SERIAL PRIMARY KEY, content TEXT NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`;
             await sql`CREATE TABLE IF NOT EXISTS missions (id SERIAL PRIMARY KEY, name TEXT NOT NULL, description TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`;
             await sql`CREATE TABLE IF NOT EXISTS interventions (id SERIAL PRIMARY KEY, mission_id INTEGER REFERENCES missions(id) ON DELETE CASCADE, equipment_id INTEGER REFERENCES equipment(id), equipment_name TEXT, description TEXT, result TEXT)`;
+
+            // Messaging / Notifications
+            await sql`CREATE TABLE IF NOT EXISTS rooms (id SERIAL PRIMARY KEY, name TEXT UNIQUE, is_group BOOLEAN DEFAULT FALSE)`;
+            await sql`CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, room TEXT, sender_id INTEGER, sender_name TEXT, content TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`;
+            await sql`CREATE TABLE IF NOT EXISTS notifications (id SERIAL PRIMARY KEY, target TEXT, role TEXT, message TEXT, read BOOLEAN DEFAULT FALSE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`;
             
             // Try to add equipment_name column if it doesn't exist
             try {
@@ -100,6 +105,11 @@ const ensureTables = async () => {
                 dbSQLite.run(`CREATE TABLE IF NOT EXISTS reports (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
                 dbSQLite.run(`CREATE TABLE IF NOT EXISTS missions (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, description TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
                 dbSQLite.run(`CREATE TABLE IF NOT EXISTS interventions (id INTEGER PRIMARY KEY AUTOINCREMENT, mission_id INTEGER, equipment_id INTEGER, equipment_name TEXT, description TEXT, result TEXT, FOREIGN KEY (mission_id) REFERENCES missions(id) ON DELETE CASCADE, FOREIGN KEY (equipment_id) REFERENCES equipment(id))`);
+
+                // Messaging / Notifications
+                dbSQLite.run(`CREATE TABLE IF NOT EXISTS rooms (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, is_group INTEGER DEFAULT 0)`);
+                dbSQLite.run(`CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, room TEXT, sender_id INTEGER, sender_name TEXT, content TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+                dbSQLite.run(`CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, target TEXT, role TEXT, message TEXT, read INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
                 
                 // Try to add equipment_name column if it doesn't exist (for existing tables)
                 dbSQLite.run(`ALTER TABLE interventions ADD COLUMN equipment_name TEXT`, (err) => {});
@@ -671,6 +681,88 @@ app.delete('/api/users/:id', authenticateToken, authorizeRole('administrateur'),
             await new Promise((res, rej) => dbSQLite.run('DELETE FROM users WHERE id = ?', [id], (err) => err ? rej(err) : res()));
         }
         res.json({ message: "Utilisateur supprimé avec succès" });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+// --- Messaging and Notifications API ---
+
+app.get('/api/rooms', authenticateToken, async (req, res) => {
+    try {
+        if (usePostgres) {
+            const rows = (await sql`SELECT * FROM rooms ORDER BY id DESC`).rows;
+            res.json({ success: true, data: rows });
+        } else {
+            dbSQLite.all('SELECT * FROM rooms ORDER BY id DESC', [], (err, rows) => {
+                if (err) return res.status(400).json({ error: err.message });
+                res.json({ success: true, data: rows });
+            });
+        }
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.get('/api/messages', authenticateToken, async (req, res) => {
+    const { room } = req.query;
+    if (!room) return res.status(400).json({ error: 'room query required' });
+    try {
+        if (usePostgres) {
+            const rows = (await sql`SELECT * FROM messages WHERE room = ${room} ORDER BY created_at ASC`).rows;
+            res.json({ success: true, data: rows });
+        } else {
+            dbSQLite.all('SELECT * FROM messages WHERE room = ? ORDER BY created_at ASC', [room], (err, rows) => {
+                if (err) return res.status(400).json({ error: err.message });
+                res.json({ success: true, data: rows });
+            });
+        }
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.post('/api/messages', authenticateToken, async (req, res) => {
+    const { room, content } = req.body;
+    const sender_id = req.user && req.user.id;
+    const sender_name = req.user && req.user.username;
+    if (!room || !content) return res.status(400).json({ error: 'room and content required' });
+    try {
+        if (usePostgres) {
+            await sql`INSERT INTO rooms (name) VALUES (${room}) ON CONFLICT (name) DO NOTHING`;
+            await sql`INSERT INTO messages (room, sender_id, sender_name, content) VALUES (${room}, ${sender_id}, ${sender_name}, ${content})`;
+            await sql`INSERT INTO notifications (target, role, message) VALUES ('administrateur', 'administrateur', ${sender_name || 'Utilisateur'} || ' a envoyé un message')`;
+            res.json({ success: true });
+        } else {
+            dbSQLite.serialize(() => {
+                dbSQLite.run('INSERT OR IGNORE INTO rooms (name, is_group) VALUES (?, ?)', [room, room.startsWith('group:') ? 1 : 0]);
+                dbSQLite.run('INSERT INTO messages (room, sender_id, sender_name, content) VALUES (?, ?, ?, ?)', [room, sender_id, sender_name, content]);
+                dbSQLite.run('INSERT INTO notifications (target, role, message) VALUES (?, ?, ?)', ['administrateur', 'administrateur', `${sender_name || 'Utilisateur'} a envoyé un message`], (err) => {});
+                res.json({ success: true });
+            });
+        }
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.get('/api/notifications', authenticateToken, async (req, res) => {
+    try {
+        const role = req.user && req.user.role;
+        const username = req.user && req.user.username;
+        if (usePostgres) {
+            const rows = (await sql`SELECT * FROM notifications WHERE role = ${role} OR target = ${username} ORDER BY created_at DESC`).rows;
+            res.json({ success: true, data: rows });
+        } else {
+            dbSQLite.all('SELECT * FROM notifications WHERE role = ? OR target = ? ORDER BY created_at DESC', [role, username], (err, rows) => {
+                if (err) return res.status(400).json({ error: err.message });
+                res.json({ success: true, data: rows });
+            });
+        }
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.post('/api/notifications/:id/read', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    try {
+        if (usePostgres) {
+            await sql`UPDATE notifications SET read = true WHERE id = ${id}`;
+        } else {
+            await new Promise((resolve, reject) => dbSQLite.run('UPDATE notifications SET read = 1 WHERE id = ?', [id], (err) => err ? reject(err) : resolve()));
+        }
+        res.json({ success: true });
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
