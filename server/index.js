@@ -749,7 +749,7 @@ app.put('/api/messages/:id', authenticateToken, async (req, res) => {
             if (!msg) return res.status(404).json({ error: 'Message not found' });
             const requesterId = req.user && req.user.id;
             const requesterRole = req.user && req.user.role;
-            if (requesterId !== msg.sender_id && requesterRole !== 'administrateur') return res.status(403).json({ error: 'Not allowed' });
+            if (String(requesterId) !== String(msg.sender_id) && requesterRole !== 'administrateur') return res.status(403).json({ error: 'Not allowed' });
             await sql`UPDATE messages SET content = ${content} WHERE id = ${id}`;
             res.json({ success: true });
         } else {
@@ -757,7 +757,7 @@ app.put('/api/messages/:id', authenticateToken, async (req, res) => {
             if (!msg) return res.status(404).json({ error: 'Message not found' });
             const requesterId = req.user && req.user.id;
             const requesterRole = req.user && req.user.role;
-            if (requesterId !== msg.sender_id && requesterRole !== 'administrateur') return res.status(403).json({ error: 'Not allowed' });
+            if (String(requesterId) !== String(msg.sender_id) && requesterRole !== 'administrateur') return res.status(403).json({ error: 'Not allowed' });
             await new Promise((resolve, reject) => dbSQLite.run('UPDATE messages SET content = ? WHERE id = ?', [content, id], (err) => err ? reject(err) : resolve()));
             res.json({ success: true });
         }
@@ -773,7 +773,7 @@ app.delete('/api/messages/:id', authenticateToken, async (req, res) => {
             if (!msg) return res.status(404).json({ error: 'Message not found' });
             const requesterId = req.user && req.user.id;
             const requesterRole = req.user && req.user.role;
-            if (requesterId !== msg.sender_id && requesterRole !== 'administrateur') return res.status(403).json({ error: 'Not allowed' });
+            if (String(requesterId) !== String(msg.sender_id) && requesterRole !== 'administrateur') return res.status(403).json({ error: 'Not allowed' });
             await sql`DELETE FROM messages WHERE id = ${id}`;
             res.json({ success: true });
         } else {
@@ -781,7 +781,7 @@ app.delete('/api/messages/:id', authenticateToken, async (req, res) => {
             if (!msg) return res.status(404).json({ error: 'Message not found' });
             const requesterId = req.user && req.user.id;
             const requesterRole = req.user && req.user.role;
-            if (requesterId !== msg.sender_id && requesterRole !== 'administrateur') return res.status(403).json({ error: 'Not allowed' });
+            if (String(requesterId) !== String(msg.sender_id) && requesterRole !== 'administrateur') return res.status(403).json({ error: 'Not allowed' });
             await new Promise((resolve, reject) => dbSQLite.run('DELETE FROM messages WHERE id = ?', [id], (err) => err ? reject(err) : resolve()));
             res.json({ success: true });
         }
