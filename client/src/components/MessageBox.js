@@ -165,7 +165,7 @@ const MessageBox = ({ onClose }) => {
                             )}
                             {canDelete && (
                               <button className="btn-action" title="Supprimer" onClick={async () => {
-                                if (!confirm('Supprimer ce message ?')) return;
+                                if (!window.confirm('Supprimer ce message ?')) return;
                                 try {
                                   await axios.delete(`/api/messages/${m.id}`, { headers });
                                   const res = await axios.get('/api/messages', { params: { room: selectedRoom }, headers });
