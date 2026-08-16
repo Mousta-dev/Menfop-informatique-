@@ -151,7 +151,7 @@ const MessageBox = ({ onClose }) => {
               ) : (
                 messages.map((m) => {
                   const isMine = m.sender_name === username;
-                  const canEdit = isMine; // allow edit only on own messages
+                  const canEdit = isMine || isAdmin; // allow edit for own messages and admin
                   const canDelete = isMine || isAdmin; // allow admin to delete
                   return (
                     <div key={m.id} className={`message-bubble ${isMine ? 'mine' : 'theirs'}`}>
