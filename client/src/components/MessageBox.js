@@ -6,6 +6,7 @@ const MessageBox = ({ onClose }) => {
   const role = sessionStorage.getItem('role');
   const isAdmin = role === 'administrateur';
   const [rooms, setRooms] = useState([]);
+  const [minimized, setMinimized] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(isAdmin ? '' : `dm:${username}`);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -99,7 +100,7 @@ const MessageBox = ({ onClose }) => {
 
   return (
     <div className="message-widget">
-      <div className="message-panel">
+      <div className={`message-panel ${minimized ? 'minimized' : ''}`}>
         <div className="message-header">
           <div className="header-left">
             <div className="header-avatar">💬</div>
@@ -112,8 +113,8 @@ const MessageBox = ({ onClose }) => {
             )}
           </div>
           <div className="header-actions">
-            <button className="btn-action" title="Minimiser" onClick={() => window.dispatchEvent(new CustomEvent('toggleChatMinimize'))}>—</button>
-            {onClose && <button className="btn-action" title="Fermer" onClick={onClose}>×</button>}
+             <button className="btn-action" title={minimized ? 'Restaurer' : 'Minimiser'} onClick={() => { setMinimized(v => !v); window.dispatchEvent(new CustomEvent('toggleChatMinimize')); }}>{minimized ? '+' : '—'}</button>
+             {onClose && <button className="btn-action" title="Fermer" onClick={onClose}>×</button>}
           </div>
         </div>
 

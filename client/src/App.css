@@ -398,16 +398,33 @@ body {
 /* MessageBox / Chat widget styles - modern premium */
 .message-widget { position: relative; }
 .message-panel {
-  width: 680px;
-  max-width: calc(100% - 40px);
-  margin: 20px auto;
-  border-radius: 18px;
-  overflow: hidden;
-  background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(250,252,255,0.6));
-  box-shadow: 0 30px 60px rgba(15,23,42,0.12);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(148,163,184,0.12);
+ width: 680px;
+ max-width: calc(100% - 40px);
+ margin: 20px auto;
+ border-radius: 18px;
+ overflow: hidden;
+ background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(250,252,255,0.6));
+ box-shadow: 0 30px 60px rgba(15,23,42,0.12);
+ backdrop-filter: blur(8px);
+ -webkit-backdrop-filter: blur(8px);
+ border: 1px solid rgba(148,163,184,0.12);
+}
+
+/* Minimized state: show header only */
+.message-panel.minimized {
+ height: 64px;
+ max-height: 64px;
+ overflow: visible;
+}
+.message-panel.minimized .message-body,
+.message-panel.minimized .message-list,
+.message-panel.minimized .message-input,
+.message-panel.minimized .message-rooms {
+ display: none !important;
+}
+.message-panel.minimized .message-header {
+ border-bottom-left-radius: 18px;
+ border-bottom-right-radius: 18px;
 }
 
 /* Full page messages page wrapper: let panel expand */
