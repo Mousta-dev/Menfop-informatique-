@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Alert, Button } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
-import MessageBox from './MessageBox';
 import { Pie, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
 import { Form } from 'react-bootstrap';
@@ -16,7 +15,6 @@ const Home = () => {
   const [equipmentByEstablishment, setEquipmentByEstablishment] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
-  const [showChat, setShowChat] = useState(false);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
