@@ -341,21 +341,6 @@ const Home = () => {
       </Card>
     </Container>
 
-      {/* Floating minimized chat button (top-right) */}
-      <div style={{ position: 'fixed', top: 12, right: 20, zIndex: 1050 }}>
-        <button className="btn btn-primary rounded-circle p-2" style={{ width: 44, height: 44 }} onClick={() => setShowChat(prev => !prev)} title="Ouvrir la messagerie">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-chat-dots" viewBox="0 0 16 16">
-            <path d="M2 2a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h1v2l2-2h7a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2z"/>
-            <path d="M5 6a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
-          </svg>
-        </button>
-      </div>
-
-      {showChat && (
-        <div style={{ position: 'fixed', top: 64, right: 20, zIndex: 1060, width: 390, maxWidth: '92vw', height: 540, borderRadius: 18, overflow: 'hidden', boxShadow: '0 18px 45px rgba(0,0,0,.18)', background: '#fff' }}>
-          <MessageBox onClose={() => setShowChat(false)} />
-        </div>
-      )}
   </>);
 };
 
