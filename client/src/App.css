@@ -410,6 +410,16 @@ body {
   border: 1px solid rgba(148,163,184,0.12);
 }
 
+/* Full page messages page wrapper: let panel expand */
+.messages-page-wrapper .message-panel {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto 24px auto;
+  border-radius: 14px;
+}
+
+/* Slightly increase message-list padding on full page */
+.messages-page-wrapper .message-list { padding-left: 48px; padding-right: 48px; }
 .message-header {
   display: flex;
   justify-content: space-between;

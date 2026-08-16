@@ -10,6 +10,8 @@ const MessageBox = ({ onClose }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [notificationCount, setNotificationCount] = useState(0);
+  const [editId, setEditId] = useState(null);
+  const [editText, setEditText] = useState('');
   const messagesEndRef = useRef(null);
   const token = sessionStorage.getItem('token');
   const headers = token ? { Authorization: 'Bearer ' + token } : {};
@@ -149,12 +151,59 @@ const MessageBox = ({ onClose }) => {
               ) : (
                 messages.map((m) => {
                   const isMine = m.sender_name === username;
+                  const canEdit = isMine; // allow edit only on own messages
+                  const canDelete = isMine || isAdmin; // allow admin to delete
                   return (
                     <div key={m.id} className={`message-bubble ${isMine ? 'mine' : 'theirs'}`}>
                       {!isMine && <div className="bubble-avatar">{m.sender_name.charAt(0).toUpperCase()}</div>}
                       <div className="bubble-content">
-                        <div className="bubble-meta">{m.sender_name} • <span className="time">{new Date(m.created_at).toLocaleTimeString()}</span></div>
-                        <div className="bubble-text">{m.content}</div>
+                        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px'}}>
+                          <div className="bubble-meta">{m.sender_name} • <span className="time">{new Date(m.created_at).toLocaleTimeString()}</span></div>
+                          <div style={{display:'flex', gap:6}}>
+                            {canEdit && editId !== m.id && (
+                              <button className="btn-action" title="Modifier" onClick={() => { setEditId(m.id); setEditText(m.content); }}>✎</button>
+                            )}
+                            {canDelete && (
+                              <button className="btn-action" title="Supprimer" onClick={async () => {
+                                if (!confirm('Supprimer ce message ?')) return;
+                                try {
+                                  await axios.delete(`/api/messages/${m.id}`, { headers });
+                                  const res = await axios.get('/api/messages', { params: { room: selectedRoom }, headers });
+                                  if (res.data && res.data.data) setMessages(res.data.data);
+                                } catch (e) {
+                                  console.error(e);
+                                  alert('Impossible de supprimer le message');
+                                }
+                              }}>🗑</button>
+                            )}
+                          </div>
+                        </div>
+
+                        {editId === m.id ? (
+                          <div style={{display:'flex', flexDirection:'column', gap:8}}>
+                            <textarea value={editText} onChange={(e) => setEditText(e.target.value)} rows={3} />
+                            <div style={{display:'flex', gap:8}}>
+                              <button className="btn" onClick={async () => {
+                                try {
+                                  const trimmed = editText.trim();
+                                  if (!trimmed) { alert('Le message ne peut pas être vide'); return; }
+                                  await axios.put(`/api/messages/${m.id}`, { content: trimmed }, { headers });
+                                  setEditId(null);
+                                  setEditText('');
+                                  const res = await axios.get('/api/messages', { params: { room: selectedRoom }, headers });
+                                  if (res.data && res.data.data) setMessages(res.data.data);
+                                } catch (e) {
+                                  console.error(e);
+                                  alert('Impossible de mettre à jour le message');
+                                }
+                              }}>Enregistrer</button>
+                              <button className="btn" onClick={() => { setEditId(null); setEditText(''); }}>Annuler</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="bubble-text">{m.content}</div>
+                        )}
+
                       </div>
                     </div>
                   );
