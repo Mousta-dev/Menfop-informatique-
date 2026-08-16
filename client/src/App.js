@@ -18,6 +18,7 @@ import MissionView from './components/MissionView';
 import UserManagement from './components/UserManagement';
 import Login from './components/Login';
 import Register from './components/Register';
+import MessageBox from './components/MessageBox';
 import './App.css';
 import axios from 'axios';
 
@@ -27,6 +28,7 @@ const AppContent = () => {
   const [userRole, setUserRole] = useState(sessionStorage.getItem('role'));
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  const [showChatSidebar, setShowChatSidebar] = useState(false);
   const location = useLocation();
 
   useEffect(()=>{},[]);
@@ -236,6 +238,21 @@ const AppContent = () => {
         </div>
         
         <div className="sidebar-footer">
+          <div style={{ marginBottom: '10px' }}>
+            <Button variant={showChatSidebar ? 'primary' : 'outline-primary'} className="w-100 rounded-pill btn-sm mb-2" onClick={() => setShowChatSidebar(v => !v)}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" className="bi bi-chat-dots me-2" viewBox="0 0 16 16">
+                <path d="M2 1a1 1 0 0 0-1 1v8.5A1.5 1.5 0 0 0 2.5 12H4v1.5a.5.5 0 0 0 .854.354L7.707 10H13a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/>
+                <path d="M3 5.5a.5.5 0 1 1 1 0 .5.5 0 0 1-1 0zm2 0a.5.5 0 1 1 1 0 .5.5 0 0 1-1 0zm2 0a.5.5 0 1 1 1 0 .5.5 0 0 1-1 0z"/>
+              </svg>
+              Messagerie
+            </Button>
+            {showChatSidebar && (
+              <div className="sidebar-chat-panel" style={{ marginBottom: '10px' }}>
+                <MessageBox onClose={() => setShowChatSidebar(false)} />
+              </div>
+            )}
+          </div>
+
           <Button variant="outline-danger" className="w-100 rounded-pill btn-sm" onClick={handleLogout}>
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" className="bi bi-box-arrow-right me-2" viewBox="0 0 16 16">
               <path fillRule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z"/>

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Card, Button, Form, ListGroup } from 'react-bootstrap';
 import axios from 'axios';
 
 const MessageBox = ({ onClose }) => {
@@ -97,68 +96,75 @@ const MessageBox = ({ onClose }) => {
   };
 
   return (
-    <Card className="border-0 shadow-sm h-100">
-      <Card.Header className="d-flex justify-content-between align-items-center px-3 py-2" style={{ background: 'linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%)', color: '#fff', borderBottom: 'none' }}>
-        <div className="d-flex align-items-center gap-2">
-          <span className="fw-bold">Messagerie</span>
-          {notificationCount > 0 && (
-            <span className="badge rounded-pill bg-light text-primary">{notificationCount}</span>
-          )}
+    <div className="message-widget">
+      <div className="message-panel">
+        <div className="message-header">
+          <div className="header-left">
+            <div className="header-avatar">💬</div>
+            <div>
+              <div className="header-title">Messagerie</div>
+              <div className="header-sub">Client ↔ Admin</div>
+            </div>
+            {notificationCount > 0 && (
+              <div className="header-badge">{notificationCount}</div>
+            )}
+          </div>
+          <div className="header-actions">
+            <button className="btn-action" title="Minimiser" onClick={() => window.dispatchEvent(new CustomEvent('toggleChatMinimize'))}>—</button>
+            {onClose && <button className="btn-action" title="Fermer" onClick={onClose}>×</button>}
+          </div>
         </div>
-        {onClose && (
-          <button type="button" className="btn btn-sm btn-light rounded-circle" onClick={onClose} aria-label="Fermer" style={{ width: 28, height: 28, padding: 0, lineHeight: '28px' }}>
-            ×
-          </button>
-        )}
-      </Card.Header>
-      <Card.Body className="p-0">
-        <div className="d-flex gap-3 p-3" style={{ minHeight: 360, flexWrap: 'wrap' }}>
+
+        <div className="message-body">
           {isAdmin && (
-            <div style={{ width: 220 }}>
-              <ListGroup>
+            <div className="message-rooms">
+              <div className="rooms-title">Conversations</div>
+              <div className="rooms-list">
                 {rooms.length === 0 ? (
-                  <ListGroup.Item variant="light" className="text-muted">Aucune conversation</ListGroup.Item>
+                  <div className="rooms-empty">Aucune conversation</div>
                 ) : (
                   rooms.map((room) => (
-                    <ListGroup.Item
+                    <button
                       key={room.id}
-                      active={selectedRoom === room.name}
-                      action
+                      className={`room-item ${selectedRoom === room.name ? 'active' : ''}`}
                       onClick={() => setSelectedRoom(room.name)}
                     >
-                      {room.name.replace(/^dm:/, '')}
-                    </ListGroup.Item>
+                      <span className="room-initial">{room.name.replace(/^dm:/, '').charAt(0).toUpperCase()}</span>
+                      <span className="room-name">{room.name.replace(/^dm:/, '')}</span>
+                    </button>
                   ))
                 )}
-              </ListGroup>
+              </div>
             </div>
           )}
 
-          <div className="flex-grow-1 d-flex flex-column" style={{ minHeight: 360, maxHeight: 480, minWidth: 0 }}>
-            <div className="small text-muted mb-2">
-              {isAdmin ? `Conversation: ${selectedRoom ? selectedRoom.replace(/^dm:/, '') : 'Aucune'}` : 'Votre conversation client/admin'}
-            </div>
-            <div className="overflow-auto mb-2 border rounded" style={{ flex: 1, background: '#f8f9fa' }}>
-              <ListGroup variant="flush">
-                {messages.length === 0 ? (
-                  <ListGroup.Item className="text-muted text-center py-4">Aucun message pour le moment.</ListGroup.Item>
-                ) : (
-                  messages.map((m) => (
-                    <ListGroup.Item
-                      key={m.id}
-                      className={m.sender_name === username ? 'text-end bg-white' : 'bg-transparent'}
-                    >
-                      <div className="small text-muted">{m.sender_name} • {new Date(m.created_at).toLocaleString()}</div>
-                      <div>{m.content}</div>
-                    </ListGroup.Item>
-                  ))
-                )}
-                <div ref={messagesEndRef} />
-              </ListGroup>
+          <div className="message-content">
+            <div className="conversation-header small text-muted">
+              {isAdmin ? `Conversation : ${selectedRoom ? selectedRoom.replace(/^dm:/, '') : 'Aucune'}` : 'Votre conversation client/admin'}
             </div>
 
-            <Form onSubmit={handleSend} className="mt-2 d-flex gap-2">
-              <Form.Control
+            <div className="message-list" role="log" aria-live="polite">
+              {messages.length === 0 ? (
+                <div className="empty-state">Aucun message pour le moment.</div>
+              ) : (
+                messages.map((m) => {
+                  const isMine = m.sender_name === username;
+                  return (
+                    <div key={m.id} className={`message-bubble ${isMine ? 'mine' : 'theirs'}`}>
+                      {!isMine && <div className="bubble-avatar">{m.sender_name.charAt(0).toUpperCase()}</div>}
+                      <div className="bubble-content">
+                        <div className="bubble-meta">{m.sender_name} • <span className="time">{new Date(m.created_at).toLocaleTimeString()}</span></div>
+                        <div className="bubble-text">{m.content}</div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <form onSubmit={handleSend} className="message-input" role="search">
+              <textarea
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={(e) => {
@@ -167,15 +173,16 @@ const MessageBox = ({ onClose }) => {
                     handleSend(e);
                   }
                 }}
-                placeholder="Votre message..."
+                placeholder={selectedRoom ? 'Tapez un message...' : 'Sélectionnez une conversation...'}
                 disabled={!selectedRoom}
+                rows={1}
               />
-              <Button type="submit" disabled={!selectedRoom || !newMessage.trim()}>Envoyer</Button>
-            </Form>
+              <button type="submit" className="send-btn" disabled={!selectedRoom || !newMessage.trim()} aria-label="Envoyer">Envoyer</button>
+            </form>
           </div>
         </div>
-      </Card.Body>
-    </Card>
+      </div>
+    </div>
   );
 };
 
