@@ -429,9 +429,11 @@ body {
 
 /* Floating unread bubble above the panel */
 .message-unread-bubble {
- position: absolute;
- top: -12px;
+ /* Fixed to the right side as requested by the user (vertical center-ish) */
+ position: fixed;
  right: 18px;
+ top: 42%;
+ transform: translateY(-50%);
  background: var(--bg-card);
  padding: 6px 8px;
  border-radius: 999px;
@@ -454,6 +456,10 @@ body {
  justify-content: center;
  border-radius: 50%;
  font-size: 0.85rem;
+}
+
+@media (max-width: 900px) {
+ .message-unread-bubble { right: 12px; top: auto; bottom: 110px; transform: none; }
 }
 
 /* Full page messages page wrapper: let panel expand */
