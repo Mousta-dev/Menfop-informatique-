@@ -146,8 +146,13 @@ const MessageBox = ({ onClose }) => {
              <button className="btn-action" title={minimized ? 'Restaurer' : 'Minimiser'} onClick={() => { setMinimized(v => !v); window.dispatchEvent(new CustomEvent('toggleChatMinimize')); }}>{minimized ? '+' : '—'}</button>
              {onClose && <button className="btn-action" title="Fermer" onClick={onClose}>×</button>}
           </div>
+          {/* Floating unread bubble above the panel */}
+          {notificationCount > 0 && (
+             <div className="message-unread-bubble" aria-hidden>
+              <span>{notificationCount}</span>
+             </div>
+          )}
         </div>
-
         <div className="message-body">
           {isAdmin && (
             <div className="message-rooms">
