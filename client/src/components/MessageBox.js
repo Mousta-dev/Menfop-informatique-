@@ -14,6 +14,7 @@ const MessageBox = ({ onClose }) => {
   const [editId, setEditId] = useState(null);
   const [editText, setEditText] = useState('');
   const messagesEndRef = useRef(null);
+  const prevUnreadRef = useRef(0);
   const token = sessionStorage.getItem('token');
   const headers = token ? { Authorization: 'Bearer ' + token } : {};
 
@@ -39,7 +40,32 @@ const MessageBox = ({ onClose }) => {
     try {
       const res = await axios.get('/api/notifications', { headers });
       if (res.data && res.data.data) {
-        setNotificationCount(res.data.data.filter((n) => !n.read).length);
+        const notifs = res.data.data;
+        const unread = notifs.filter((n) => !n.read);
+        setNotificationCount(unread.length);
+        // If admin and there are new unread notifications, show a desktop notification
+        if (isAdmin) {
+          try {
+            // request permission proactively if not granted
+            if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted') {
+              Notification.requestPermission().catch(() => {});
+            }
+            const prev = prevUnreadRef.current || 0;
+            if (unread.length > prev) {
+              const newest = unread[0] || unread[unread.length - 1];
+              // Only show if permission granted
+              if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+                const title = 'Nouveau message client';
+                const body = (newest && newest.message) ? newest.message : 'Un client a envoyé un message.';
+                // show notification
+                new Notification(title, { body });
+              }
+            }
+            prevUnreadRef.current = unread.length;
+          } catch (e) {
+            // ignore notification errors
+          }
+        }
       }
     } catch (e) {
       // ignore
@@ -49,6 +75,10 @@ const MessageBox = ({ onClose }) => {
   useEffect(() => {
     if (isAdmin) fetchRooms();
     fetchNotifications();
+    // request notification permission for admin proactively
+    if (isAdmin && typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted') {
+      Notification.requestPermission().catch(() => {});
+    }
   }, [isAdmin, token]);
 
   useEffect(() => {
