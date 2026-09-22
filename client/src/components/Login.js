@@ -30,6 +30,7 @@ const Login = ({ setIsAuthenticated, setUserRole }) => {
         sessionStorage.setItem('token', response.data.token);
         sessionStorage.setItem('role', response.data.role);
         sessionStorage.setItem('username', response.data.username);
+        sessionStorage.setItem('userId', response.data.userId);
         setIsAuthenticated(true);
         setUserRole(response.data.role);
         navigate('/');

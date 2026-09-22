@@ -56,6 +56,21 @@ const ensureTables = async () => {
             await sql`CREATE TABLE IF NOT EXISTS missions (id SERIAL PRIMARY KEY, name TEXT NOT NULL, description TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`;
             await sql`CREATE TABLE IF NOT EXISTS interventions (id SERIAL PRIMARY KEY, mission_id INTEGER REFERENCES missions(id) ON DELETE CASCADE, equipment_id INTEGER REFERENCES equipment(id), equipment_name TEXT, description TEXT, result TEXT)`;
             
+            // Chat system tables
+            await sql`CREATE TABLE IF NOT EXISTS conversations (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`;
+            await sql`CREATE TABLE IF NOT EXISTS messages (
+                id SERIAL PRIMARY KEY,
+                conversation_id INTEGER NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+                sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                content TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`;
+            
             // Try to add equipment_name column if it doesn't exist
             try {
                 await sql`ALTER TABLE interventions ADD COLUMN IF NOT EXISTS equipment_name TEXT`;
@@ -100,6 +115,24 @@ const ensureTables = async () => {
                 dbSQLite.run(`CREATE TABLE IF NOT EXISTS reports (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
                 dbSQLite.run(`CREATE TABLE IF NOT EXISTS missions (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, description TEXT, status TEXT NOT NULL DEFAULT 'pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
                 dbSQLite.run(`CREATE TABLE IF NOT EXISTS interventions (id INTEGER PRIMARY KEY AUTOINCREMENT, mission_id INTEGER, equipment_id INTEGER, equipment_name TEXT, description TEXT, result TEXT, FOREIGN KEY (mission_id) REFERENCES missions(id) ON DELETE CASCADE, FOREIGN KEY (equipment_id) REFERENCES equipment(id))`);
+                
+                // Chat system tables
+                dbSQLite.run(`CREATE TABLE IF NOT EXISTS conversations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+                )`);
+                dbSQLite.run(`CREATE TABLE IF NOT EXISTS messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    conversation_id INTEGER NOT NULL,
+                    sender_id INTEGER NOT NULL,
+                    content TEXT NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+                    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+                )`);
                 
                 // Try to add equipment_name column if it doesn't exist (for existing tables)
                 dbSQLite.run(`ALTER TABLE interventions ADD COLUMN equipment_name TEXT`, (err) => {});
@@ -209,7 +242,7 @@ app.post('/api/login', async (req, res) => {
         if (valid) {
             const displayName = user.username || user.email || user.phone;
             const token = jwt.sign({ id: user.id, username: displayName, role: user.role }, process.env.JWT_SECRET || 'fallback_secret', { expiresIn: '7d' });
-            res.json({ success: true, token, role: user.role, username: displayName });
+            res.json({ success: true, token, role: user.role, username: displayName, userId: user.id });
         } else {
             res.json({ success: false, message: 'Identifiants invalides' });
         }
@@ -671,6 +704,143 @@ app.delete('/api/users/:id', authenticateToken, authorizeRole('administrateur'),
             await new Promise((res, rej) => dbSQLite.run('DELETE FROM users WHERE id = ?', [id], (err) => err ? rej(err) : res()));
         }
         res.json({ message: "Utilisateur supprimé avec succès" });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+// --- CHAT SYSTEM ENDPOINTS ---
+
+// Get or create conversation for current user
+app.get('/api/conversations', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        let conversation;
+        
+        if (usePostgres) {
+            const result = await sql`SELECT * FROM conversations WHERE user_id = ${userId}`;
+            conversation = result.rows[0];
+            if (!conversation) {
+                const newConv = await sql`INSERT INTO conversations (user_id) VALUES (${userId}) RETURNING id, user_id, created_at, updated_at`;
+                conversation = newConv.rows[0];
+            }
+        } else {
+            conversation = await new Promise((res, rej) => 
+                dbSQLite.get('SELECT * FROM conversations WHERE user_id = ?', [userId], (err, r) => err ? rej(err) : res(r))
+            );
+            if (!conversation) {
+                await new Promise((res, rej) =>
+                    dbSQLite.run('INSERT INTO conversations (user_id) VALUES (?)', [userId], function(err) {
+                        if (err) return rej(err);
+                        conversation = { id: this.lastID, user_id: userId, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+                        res(null);
+                    })
+                );
+            }
+        }
+        res.json({ success: true, data: conversation });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+// Get all conversations (for admin)
+app.get('/api/conversations/admin/all', authenticateToken, authorizeRole('administrateur'), async (req, res) => {
+    try {
+        let conversations;
+        if (usePostgres) {
+            const result = await sql`SELECT c.*, u.username, u.email FROM conversations c JOIN users u ON c.user_id = u.id ORDER BY c.updated_at DESC`;
+            conversations = result.rows;
+        } else {
+            conversations = await new Promise((res, rej) =>
+                dbSQLite.all('SELECT c.*, u.username, u.email FROM conversations c JOIN users u ON c.user_id = u.id ORDER BY c.updated_at DESC', [], (err, r) => err ? rej(err) : res(r))
+            );
+        }
+        res.json({ success: true, data: conversations });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+// Get messages for a conversation
+app.get('/api/conversations/:conversationId/messages', authenticateToken, async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+        const userId = req.user.id;
+        
+        // Check if user has access to this conversation
+        let conversation;
+        if (usePostgres) {
+            const result = await sql`SELECT * FROM conversations WHERE id = ${conversationId}`;
+            conversation = result.rows[0];
+        } else {
+            conversation = await new Promise((res, rej) =>
+                dbSQLite.get('SELECT * FROM conversations WHERE id = ?', [conversationId], (err, r) => err ? rej(err) : res(r))
+            );
+        }
+        
+        if (!conversation) return res.status(404).json({ error: "Conversation non trouvée" });
+        if (req.user.role !== 'administrateur' && conversation.user_id !== userId) {
+            return res.status(403).json({ error: "Accès refusé" });
+        }
+        
+        // Get messages
+        let messages;
+        if (usePostgres) {
+            const result = await sql`SELECT m.*, u.username FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.conversation_id = ${conversationId} ORDER BY m.created_at ASC`;
+            messages = result.rows;
+        } else {
+            messages = await new Promise((res, rej) =>
+                dbSQLite.all('SELECT m.*, u.username FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.conversation_id = ? ORDER BY m.created_at ASC', [conversationId], (err, r) => err ? rej(err) : res(r))
+            );
+        }
+        res.json({ success: true, data: messages });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+// Send message in conversation
+app.post('/api/conversations/:conversationId/messages', authenticateToken, async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+        const { content } = req.body;
+        const senderId = req.user.id;
+        
+        if (!content || content.trim() === '') {
+            return res.status(400).json({ error: "Le message ne peut pas être vide" });
+        }
+        
+        // Check if conversation exists
+        let conversation;
+        if (usePostgres) {
+            const result = await sql`SELECT * FROM conversations WHERE id = ${conversationId}`;
+            conversation = result.rows[0];
+        } else {
+            conversation = await new Promise((res, rej) =>
+                dbSQLite.get('SELECT * FROM conversations WHERE id = ?', [conversationId], (err, r) => err ? rej(err) : res(r))
+            );
+        }
+        
+        if (!conversation) return res.status(404).json({ error: "Conversation non trouvée" });
+        
+        // Check access
+        if (req.user.role !== 'administrateur' && conversation.user_id !== senderId) {
+            return res.status(403).json({ error: "Accès refusé" });
+        }
+        
+        // Insert message and update conversation updated_at
+        let message;
+        if (usePostgres) {
+            const result = await sql`INSERT INTO messages (conversation_id, sender_id, content) VALUES (${conversationId}, ${senderId}, ${content}) RETURNING id, conversation_id, sender_id, content, created_at`;
+            message = result.rows[0];
+            await sql`UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ${conversationId}`;
+        } else {
+            await new Promise((res, rej) =>
+                dbSQLite.run('INSERT INTO messages (conversation_id, sender_id, content) VALUES (?, ?, ?)', [conversationId, senderId, content], function(err) {
+                    if (err) return rej(err);
+                    message = { id: this.lastID, conversation_id: conversationId, sender_id: senderId, content, created_at: new Date().toISOString() };
+                    res(null);
+                })
+            );
+            await new Promise((res, rej) =>
+                dbSQLite.run('UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?', [conversationId], (err) => err ? rej(err) : res())
+            );
+        }
+        
+        res.status(201).json({ success: true, data: message });
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 

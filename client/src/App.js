@@ -16,6 +16,8 @@ import MissionForm from './components/MissionForm';
 import MissionsList from './components/MissionsList';
 import MissionView from './components/MissionView';
 import UserManagement from './components/UserManagement';
+import UserChat from './components/UserChat';
+import AdminChat from './components/AdminChat';
 import Login from './components/Login';
 import Register from './components/Register';
 import './App.css';
@@ -208,6 +210,15 @@ const AppContent = () => {
             {t('sidebar.view_reports')}
           </NavLink>
 
+          {/* Chat section */}
+          <NavLink to={userRole === 'administrateur' ? "/admin-chat" : "/chat"} className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-chat-dots me-2" viewBox="0 0 16 16">
+              <path d="M5 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0m4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
+              <path d="m2.165 15.803.02-.004c1.83-.363 4.745-1.45 6.289-2.788.2.167.518.525.914.528a.5.5 0 0 0 .44-.24l1.294-2.582a.5.5 0 0 0-.121-.659L.88 7.319c-.5-.003-.9.147-1.07.471L0 7.7a.5.5 0 0 0 .03.bp001M14.6 2.4L15.9.9a.5.5 0 0 0-.121-.659L1.348 6.513a.5.5 0 0 0 .04.44l1.294 2.582c.33.203.785.114.995-.12 1.544 1.338 4.458 2.425 6.289 2.788l.02.004a.5.5 0 0 0 .46-.24l1.4-2.8a.5.5 0 0 0 .04-.44"/>
+            </svg>
+            {userRole === 'administrateur' ? '📬 Admin Chat' : '💬 Contact'}
+          </NavLink>
+
           {userRole === 'administrateur' && (
             <>
               <div className="sidebar-section-label px-3 pt-3 pb-1 text-uppercase small fw-bold text-danger" style={{ fontSize: '0.7rem', letterSpacing: '0.05em' }}>
@@ -328,6 +339,8 @@ const AppContent = () => {
               <Route path="/missions" element={<PrivateRoute><MissionsList /></PrivateRoute>} />
               <Route path="/missions/:id" element={<PrivateRoute><MissionView /></PrivateRoute>} />
               <Route path="/users" element={<PrivateRoute>{userRole === 'administrateur' ? <UserManagement /> : <Navigate to="/" />}</PrivateRoute>} />
+              <Route path="/chat" element={<PrivateRoute>{userRole !== 'administrateur' ? <UserChat token={sessionStorage.getItem('token')} username={sessionStorage.getItem('username')} /> : <Navigate to="/" />}</PrivateRoute>} />
+              <Route path="/admin-chat" element={<PrivateRoute>{userRole === 'administrateur' ? <AdminChat token={sessionStorage.getItem('token')} /> : <Navigate to="/" />}</PrivateRoute>} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </Container>
