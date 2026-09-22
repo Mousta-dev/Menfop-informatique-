@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import api from '../api';
 import './UserChat.css';
 
 const UserChat = ({ token, username }) => {
@@ -10,22 +10,16 @@ const UserChat = ({ token, username }) => {
     const [error, setError] = useState('');
     const messagesEndRef = useRef(null);
 
-    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
-
     // Initialize conversation and load messages
     useEffect(() => {
         const initChat = async () => {
             try {
                 // Get or create conversation
-                const convRes = await axios.get(`${API_URL}/conversations`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const convRes = await api.get('/conversations');
                 setConversationId(convRes.data.data.id);
                 
                 // Load messages
-                const msgsRes = await axios.get(`${API_URL}/conversations/${convRes.data.data.id}/messages`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const msgsRes = await api.get(`/conversations/${convRes.data.data.id}/messages`);
                 setMessages(msgsRes.data.data);
                 setLoading(false);
             } catch (err) {
@@ -34,7 +28,7 @@ const UserChat = ({ token, username }) => {
             }
         };
         initChat();
-    }, [token, API_URL]);
+    }, []);
 
     // Auto-scroll to bottom
     useEffect(() => {
@@ -47,9 +41,7 @@ const UserChat = ({ token, username }) => {
         
         const interval = setInterval(async () => {
             try {
-                const msgsRes = await axios.get(`${API_URL}/conversations/${conversationId}/messages`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const msgsRes = await api.get(`/conversations/${conversationId}/messages`);
                 setMessages(msgsRes.data.data);
             } catch (err) {
                 console.error('Erreur lors du rafraîchissement:', err);
@@ -57,17 +49,16 @@ const UserChat = ({ token, username }) => {
         }, 3000); // Refresh every 3 seconds
 
         return () => clearInterval(interval);
-    }, [conversationId, token, API_URL]);
+    }, [conversationId]);
 
     const handleSendMessage = async (e) => {
         e.preventDefault();
         if (!newMessage.trim() || !conversationId) return;
 
         try {
-            const res = await axios.post(
-                `${API_URL}/conversations/${conversationId}/messages`,
-                { content: newMessage },
-                { headers: { Authorization: `Bearer ${token}` } }
+            const res = await api.post(
+                `/conversations/${conversationId}/messages`,
+                { content: newMessage }
             );
             
             setMessages([...messages, { ...res.data.data, username }]);

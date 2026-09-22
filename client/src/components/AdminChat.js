@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import api from '../api';
 import './AdminChat.css';
 
 const AdminChat = ({ token }) => {
@@ -11,15 +11,11 @@ const AdminChat = ({ token }) => {
     const [error, setError] = useState('');
     const messagesEndRef = useRef(null);
 
-    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
-
     // Load all conversations
     useEffect(() => {
         const loadConversations = async () => {
             try {
-                const res = await axios.get(`${API_URL}/conversations/admin/all`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const res = await api.get('/conversations/admin/all');
                 setConversations(res.data.data);
                 setLoading(false);
             } catch (err) {
@@ -28,15 +24,13 @@ const AdminChat = ({ token }) => {
             }
         };
         loadConversations();
-    }, [token, API_URL]);
+    }, []);
 
     // Refresh conversations periodically
     useEffect(() => {
         const interval = setInterval(async () => {
             try {
-                const res = await axios.get(`${API_URL}/conversations/admin/all`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const res = await api.get('/conversations/admin/all');
                 setConversations(res.data.data);
             } catch (err) {
                 console.error('Erreur:', err);
@@ -44,7 +38,7 @@ const AdminChat = ({ token }) => {
         }, 5000); // Refresh every 5 seconds
 
         return () => clearInterval(interval);
-    }, [token, API_URL]);
+    }, []);
 
     // Load messages when conversation is selected
     useEffect(() => {
@@ -52,9 +46,7 @@ const AdminChat = ({ token }) => {
 
         const loadMessages = async () => {
             try {
-                const res = await axios.get(`${API_URL}/conversations/${selectedConvId}/messages`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const res = await api.get(`/conversations/${selectedConvId}/messages`);
                 setMessages(res.data.data);
             } catch (err) {
                 setError(err.response?.data?.error || 'Erreur lors du chargement');
@@ -65,7 +57,7 @@ const AdminChat = ({ token }) => {
         // Refresh messages periodically
         const interval = setInterval(loadMessages, 3000);
         return () => clearInterval(interval);
-    }, [selectedConvId, token, API_URL]);
+    }, [selectedConvId]);
 
     // Auto-scroll to bottom
     useEffect(() => {
@@ -77,10 +69,9 @@ const AdminChat = ({ token }) => {
         if (!newMessage.trim() || !selectedConvId) return;
 
         try {
-            const res = await axios.post(
-                `${API_URL}/conversations/${selectedConvId}/messages`,
-                { content: newMessage },
-                { headers: { Authorization: `Bearer ${token}` } }
+            const res = await api.post(
+                `/conversations/${selectedConvId}/messages`,
+                { content: newMessage }
             );
             
             setMessages([...messages, res.data.data]);
@@ -88,10 +79,6 @@ const AdminChat = ({ token }) => {
         } catch (err) {
             setError(err.response?.data?.error || 'Erreur lors de l\'envoi');
         }
-    };
-
-    const getUnreadCount = (conv) => {
-        return messages.filter(m => m.conversation_id === conv.id).length;
     };
 
     if (loading) return <div className="admin-chat-container"><p>Chargement...</p></div>;
