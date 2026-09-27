@@ -60,6 +60,7 @@ const ensureTables = async () => {
             await sql`CREATE TABLE IF NOT EXISTS rooms (id SERIAL PRIMARY KEY, name TEXT UNIQUE, is_group BOOLEAN DEFAULT FALSE)`;
             await sql`CREATE TABLE IF NOT EXISTS messages (id SERIAL PRIMARY KEY, room TEXT, sender_id INTEGER, sender_name TEXT, content TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`;
             await sql`CREATE TABLE IF NOT EXISTS notifications (id SERIAL PRIMARY KEY, target TEXT, role TEXT, message TEXT, read BOOLEAN DEFAULT FALSE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`;
+            await sql`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS room TEXT`;
             
             // Try to add equipment_name column if it doesn't exist
             try {
@@ -109,23 +110,39 @@ const ensureTables = async () => {
                 // Messaging / Notifications
                 dbSQLite.run(`CREATE TABLE IF NOT EXISTS rooms (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, is_group INTEGER DEFAULT 0)`);
                 dbSQLite.run(`CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, room TEXT, sender_id INTEGER, sender_name TEXT, content TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
-                dbSQLite.run(`CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, target TEXT, role TEXT, message TEXT, read INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`);
+                dbSQLite.run(`CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, target TEXT, role TEXT, message TEXT, read INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, room TEXT)`);
                 
                 // Try to add equipment_name column if it doesn't exist (for existing tables)
                 dbSQLite.run(`ALTER TABLE interventions ADD COLUMN equipment_name TEXT`, (err) => {});
                 
-                dbSQLite.get('SELECT * FROM users WHERE username = ? OR email = ?', ['Alpha', 'admin@menfop.com'], (err, row) => {
-                    if (!err && !row) {
-                        bcrypt.hash('Mousta@2025', 10, (err, hash) => {
-                            if (!err) dbSQLite.run('INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)', ['Alpha', 'admin@menfop.com', hash, 'administrateur'], () => {
+                dbSQLite.all('PRAGMA table_info(notifications)', (schemaErr, columns) => {
+                    if (schemaErr) return reject(schemaErr);
+                    const continueInitialization = () => {
+                        dbSQLite.get('SELECT * FROM users WHERE username = ? OR email = ?', ['Alpha', 'admin@menfop.com'], (err, row) => {
+                            if (err) return reject(err);
+                            if (!row) {
+                                bcrypt.hash('Mousta@2025', 10, (hashErr, hash) => {
+                                    if (hashErr) return reject(hashErr);
+                                    dbSQLite.run('INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)', ['Alpha', 'admin@menfop.com', hash, 'administrateur'], (insertErr) => {
+                                        if (insertErr) return reject(insertErr);
+                                        tablesEnsured = true;
+                                        resolve();
+                                    });
+                                });
+                            } else {
                                 tablesEnsured = true;
                                 resolve();
-                            });
-                            else resolve();
+                            }
                         });
+                    };
+
+                    if (columns.some((column) => column.name === 'room')) {
+                        continueInitialization();
                     } else {
-                        tablesEnsured = true;
-                        resolve();
+                        dbSQLite.run('ALTER TABLE notifications ADD COLUMN room TEXT', (alterErr) => {
+                            if (alterErr) return reject(alterErr);
+                            continueInitialization();
+                        });
                     }
                 });
             });
@@ -689,10 +706,17 @@ app.delete('/api/users/:id', authenticateToken, authorizeRole('administrateur'),
 app.get('/api/rooms', authenticateToken, async (req, res) => {
     try {
         if (usePostgres) {
-            const rows = (await sql`SELECT * FROM rooms ORDER BY id DESC`).rows;
+            const rows = req.user.role === 'administrateur'
+                ? (await sql`SELECT * FROM rooms WHERE name LIKE 'dm:%' ORDER BY id DESC`).rows
+                : (await sql`SELECT * FROM rooms WHERE name = ${'dm:' + req.user.username}`).rows;
             res.json({ success: true, data: rows });
         } else {
-            dbSQLite.all('SELECT * FROM rooms ORDER BY id DESC', [], (err, rows) => {
+            const isAdmin = req.user.role === 'administrateur';
+            const query = isAdmin
+                ? "SELECT * FROM rooms WHERE name LIKE 'dm:%' ORDER BY id DESC"
+                : 'SELECT * FROM rooms WHERE name = ?';
+            const params = isAdmin ? [] : ['dm:' + req.user.username];
+            dbSQLite.all(query, params, (err, rows) => {
                 if (err) return res.status(400).json({ error: err.message });
                 res.json({ success: true, data: rows });
             });
@@ -703,6 +727,10 @@ app.get('/api/rooms', authenticateToken, async (req, res) => {
 app.get('/api/messages', authenticateToken, async (req, res) => {
     const { room } = req.query;
     if (!room) return res.status(400).json({ error: 'room query required' });
+    if (!String(room).startsWith('dm:')) return res.status(400).json({ error: 'invalid conversation' });
+    if (req.user.role !== 'administrateur' && room !== 'dm:' + req.user.username) {
+        return res.status(403).json({ error: 'Accès refusé à cette conversation' });
+    }
     try {
         if (usePostgres) {
             const rows = (await sql`SELECT * FROM messages WHERE room = ${room} ORDER BY created_at ASC`).rows;
@@ -720,19 +748,34 @@ app.post('/api/messages', authenticateToken, async (req, res) => {
     const { room, content } = req.body;
     const sender_id = req.user && req.user.id;
     const sender_name = req.user && req.user.username;
-    if (!room || !content) return res.status(400).json({ error: 'room and content required' });
+    const cleanContent = typeof content === 'string' ? content.trim() : '';
+    if (typeof room !== 'string' || !room.startsWith('dm:') || !cleanContent) {
+        return res.status(400).json({ error: 'A conversation and message are required' });
+    }
+    if (req.user.role !== 'administrateur' && room !== 'dm:' + sender_name) {
+        return res.status(403).json({ error: 'Accès refusé à cette conversation' });
+    }
+    const recipientRole = req.user.role === 'administrateur' ? 'utilisateur' : 'administrateur';
+    const recipient = req.user.role === 'administrateur' ? room.slice(3) : 'administrateur';
+    const notificationText = req.user.role === 'administrateur'
+        ? `${sender_name || 'Administrateur'} vous a répondu`
+        : `${sender_name || 'Utilisateur'} a envoyé un message`;
     try {
         if (usePostgres) {
             await sql`INSERT INTO rooms (name) VALUES (${room}) ON CONFLICT (name) DO NOTHING`;
-            await sql`INSERT INTO messages (room, sender_id, sender_name, content) VALUES (${room}, ${sender_id}, ${sender_name}, ${content})`;
-            await sql`INSERT INTO notifications (target, role, message) VALUES ('administrateur', 'administrateur', ${sender_name || 'Utilisateur'} || ' a envoyé un message')`;
+            await sql`INSERT INTO messages (room, sender_id, sender_name, content) VALUES (${room}, ${sender_id}, ${sender_name}, ${cleanContent})`;
+            await sql`INSERT INTO notifications (target, role, message, room) VALUES (${recipient}, ${recipientRole}, ${notificationText}, ${room})`;
             res.json({ success: true });
         } else {
             dbSQLite.serialize(() => {
                 dbSQLite.run('INSERT OR IGNORE INTO rooms (name, is_group) VALUES (?, ?)', [room, room.startsWith('group:') ? 1 : 0]);
-                dbSQLite.run('INSERT INTO messages (room, sender_id, sender_name, content) VALUES (?, ?, ?, ?)', [room, sender_id, sender_name, content]);
-                dbSQLite.run('INSERT INTO notifications (target, role, message) VALUES (?, ?, ?)', ['administrateur', 'administrateur', `${sender_name || 'Utilisateur'} a envoyé un message`], (err) => {});
-                res.json({ success: true });
+                dbSQLite.run('INSERT INTO messages (room, sender_id, sender_name, content) VALUES (?, ?, ?, ?)', [room, sender_id, sender_name, cleanContent], (messageErr) => {
+                    if (messageErr) return res.status(500).json({ error: messageErr.message });
+                    dbSQLite.run('INSERT INTO notifications (target, role, message, room) VALUES (?, ?, ?, ?)', [recipient, recipientRole, notificationText, room], (notificationErr) => {
+                        if (notificationErr) return res.status(500).json({ error: notificationErr.message });
+                        res.json({ success: true });
+                    });
+                });
             });
         }
     } catch (err) { res.status(400).json({ error: err.message }); }
@@ -793,10 +836,16 @@ app.get('/api/notifications', authenticateToken, async (req, res) => {
         const role = req.user && req.user.role;
         const username = req.user && req.user.username;
         if (usePostgres) {
-            const rows = (await sql`SELECT * FROM notifications WHERE role = ${role} OR target = ${username} ORDER BY created_at DESC`).rows;
+            const rows = role === 'administrateur'
+                ? (await sql`SELECT * FROM notifications WHERE role = 'administrateur' OR target = 'administrateur' ORDER BY created_at DESC`).rows
+                : (await sql`SELECT * FROM notifications WHERE target = ${username} ORDER BY created_at DESC`).rows;
             res.json({ success: true, data: rows });
         } else {
-            dbSQLite.all('SELECT * FROM notifications WHERE role = ? OR target = ? ORDER BY created_at DESC', [role, username], (err, rows) => {
+            const query = role === 'administrateur'
+                ? "SELECT * FROM notifications WHERE role = 'administrateur' OR target = 'administrateur' ORDER BY created_at DESC"
+                : 'SELECT * FROM notifications WHERE target = ? ORDER BY created_at DESC';
+            const params = role === 'administrateur' ? [] : [username];
+            dbSQLite.all(query, params, (err, rows) => {
                 if (err) return res.status(400).json({ error: err.message });
                 res.json({ success: true, data: rows });
             });
@@ -808,9 +857,47 @@ app.post('/api/notifications/:id/read', authenticateToken, async (req, res) => {
     const { id } = req.params;
     try {
         if (usePostgres) {
+            const notification = (await sql`SELECT target, role FROM notifications WHERE id = ${id}`).rows[0];
+            if (!notification) return res.status(404).json({ error: 'Notification non trouvée' });
+            const canRead = req.user.role === 'administrateur'
+                ? notification.role === 'administrateur'
+                : notification.target === req.user.username;
+            if (!canRead) return res.status(403).json({ error: 'Accès refusé à cette notification' });
             await sql`UPDATE notifications SET read = true WHERE id = ${id}`;
         } else {
+            const notification = await new Promise((resolve, reject) => dbSQLite.get('SELECT target, role FROM notifications WHERE id = ?', [id], (err, row) => err ? reject(err) : resolve(row)));
+            if (!notification) return res.status(404).json({ error: 'Notification non trouvée' });
+            const canRead = req.user.role === 'administrateur'
+                ? notification.role === 'administrateur'
+                : notification.target === req.user.username;
+            if (!canRead) return res.status(403).json({ error: 'Accès refusé à cette notification' });
             await new Promise((resolve, reject) => dbSQLite.run('UPDATE notifications SET read = 1 WHERE id = ?', [id], (err) => err ? reject(err) : resolve()));
+        }
+        res.json({ success: true });
+    } catch (err) { res.status(400).json({ error: err.message }); }
+});
+
+app.post('/api/notifications/read-room', authenticateToken, async (req, res) => {
+    const { room } = req.body;
+    if (typeof room !== 'string' || !room.startsWith('dm:')) {
+        return res.status(400).json({ error: 'invalid conversation' });
+    }
+    if (req.user.role !== 'administrateur' && room !== 'dm:' + req.user.username) {
+        return res.status(403).json({ error: 'Accès refusé à cette conversation' });
+    }
+    try {
+        if (usePostgres) {
+            if (req.user.role === 'administrateur') {
+                await sql`UPDATE notifications SET read = true WHERE room = ${room} AND role = 'administrateur'`;
+            } else {
+                await sql`UPDATE notifications SET read = true WHERE room = ${room} AND target = ${req.user.username}`;
+            }
+        } else {
+            const query = req.user.role === 'administrateur'
+                ? "UPDATE notifications SET read = 1 WHERE room = ? AND role = 'administrateur'"
+                : 'UPDATE notifications SET read = 1 WHERE room = ? AND target = ?';
+            const params = req.user.role === 'administrateur' ? [room] : [room, req.user.username];
+            await new Promise((resolve, reject) => dbSQLite.run(query, params, (err) => err ? reject(err) : resolve()));
         }
         res.json({ success: true });
     } catch (err) { res.status(400).json({ error: err.message }); }
@@ -823,4 +910,3 @@ if (require.main === module) {
         console.log(`Server is running on port ${PORT}`);
     });
 }
-

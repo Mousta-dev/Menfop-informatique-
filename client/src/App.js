@@ -18,7 +18,6 @@ import MissionView from './components/MissionView';
 import UserManagement from './components/UserManagement';
 import Login from './components/Login';
 import Register from './components/Register';
-import MessageBox from './components/MessageBox';
 import MessagesPage from './components/MessagesPage';
 import './App.css';
 import axios from 'axios';
@@ -109,6 +108,8 @@ const AppContent = () => {
         } catch (e) { /* ignore */ }
       };
       fetchUnread();
+      const intervalId = window.setInterval(fetchUnread, 4000);
+      return () => window.clearInterval(intervalId);
     }, []);
 
     return (
@@ -239,12 +240,13 @@ const AppContent = () => {
         
         <div className="sidebar-footer">
           <div style={{ marginBottom: '10px' }}>
-            <Button as={Link} to="/messages" variant={location.pathname === '/messages' ? 'primary' : 'outline-primary'} className="w-100 rounded-pill btn-sm mb-2" onClick={() => setShowMobileMenu(false)}>
+            <Button as={Link} to="/messages" variant={location.pathname === '/messages' ? 'primary' : 'outline-primary'} className="w-100 rounded-pill btn-sm mb-2 sidebar-messages-link" onClick={() => setShowMobileMenu(false)}>
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" className="bi bi-chat-dots me-2" viewBox="0 0 16 16">
                 <path d="M2 1a1 1 0 0 0-1 1v8.5A1.5 1.5 0 0 0 2.5 12H4v1.5a.5.5 0 0 0 .854.354L7.707 10H13a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/>
                 <path d="M3 5.5a.5.5 0 1 1 1 0 .5.5 0 0 1-1 0zm2 0a.5.5 0 1 1 1 0 .5.5 0 0 1-1 0zm2 0a.5.5 0 1 1 1 0 .5.5 0 0 1-1 0z"/>
               </svg>
               Messagerie
+              {unreadCount > 0 && <span className="sidebar-unread-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}
             </Button>
           </div>
 
@@ -372,7 +374,5 @@ const App = () => {
 };
 
 export default App;
-
-
 
 

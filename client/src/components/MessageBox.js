@@ -1,130 +1,195 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 
 const MessageBox = ({ onClose }) => {
   const username = sessionStorage.getItem('username');
-  const role = sessionStorage.getItem('role');
-  const isAdmin = role === 'administrateur';
+  const isAdmin = sessionStorage.getItem('role') === 'administrateur';
+  const token = sessionStorage.getItem('token');
+  const headers = useMemo(() => (token ? { Authorization: `Bearer ${token}` } : {}), [token]);
   const [rooms, setRooms] = useState([]);
-  const [minimized, setMinimized] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(isAdmin ? '' : `dm:${username}`);
   const [messages, setMessages] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [notificationCount, setNotificationCount] = useState(0);
   const [editId, setEditId] = useState(null);
   const [editText, setEditText] = useState('');
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [minimized, setMinimized] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const messagesEndRef = useRef(null);
-  const prevUnreadRef = useRef(0);
-  const token = sessionStorage.getItem('token');
-  const headers = token ? { Authorization: 'Bearer ' + token } : {};
+  const shouldAutoScroll = useRef(true);
+  const knownNotificationIds = useRef(new Set());
+  const notificationsInitialized = useRef(false);
 
-  const fetchRooms = async () => {
+  const fetchRooms = useCallback(async () => {
+    if (!isAdmin) return;
     try {
       const res = await axios.get('/api/rooms', { headers });
-      if (res.data && res.data.data) {
-        const directRooms = res.data.data.filter(
-          (room) => room && typeof room.name === 'string' && room.name.startsWith('dm:')
-        );
-        setRooms(directRooms);
-        if (isAdmin && !selectedRoom && directRooms.length > 0) {
-          setSelectedRoom(directRooms[0].name);
-        }
-      }
-    } catch (e) {
-      // ignore
+      const directRooms = (res.data?.data || []).filter(
+        (room) => room && typeof room.name === 'string' && room.name.startsWith('dm:')
+      );
+      setRooms(directRooms);
+      setSelectedRoom((currentRoom) => (
+        currentRoom && directRooms.some((room) => room.name === currentRoom)
+          ? currentRoom
+          : directRooms[0]?.name || ''
+      ));
+    } catch (error) {
+      setErrorMessage(error.response?.data?.error || 'Impossible de charger les conversations.');
     }
-  };
+  }, [headers, isAdmin]);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!token) return;
     try {
       const res = await axios.get('/api/notifications', { headers });
-      if (res.data && res.data.data) {
-        const notifs = res.data.data;
-        const unread = notifs.filter((n) => !n.read);
-        setNotificationCount(unread.length);
-        // If admin and there are new unread notifications, show a desktop notification
-        if (isAdmin) {
-          try {
-            // request permission proactively if not granted
-            if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted') {
-              Notification.requestPermission().catch(() => {});
-            }
-            const prev = prevUnreadRef.current || 0;
-            if (unread.length > prev) {
-              const newest = unread[0] || unread[unread.length - 1];
-              // Only show if permission granted
-              if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-                const title = 'Nouveau message client';
-                const body = (newest && newest.message) ? newest.message : 'Un client a envoyé un message.';
-                // show notification
-                new Notification(title, { body });
-              }
-            }
-            prevUnreadRef.current = unread.length;
-          } catch (e) {
-            // ignore notification errors
+      const nextNotifications = res.data?.data || [];
+      if (notificationsInitialized.current && window.Notification?.permission === 'granted') {
+        nextNotifications.forEach((notification) => {
+          if (!notification.read && !knownNotificationIds.current.has(String(notification.id))) {
+            new window.Notification('Nouveau message', { body: notification.message });
           }
-        }
+        });
       }
-    } catch (e) {
-      // ignore
+      knownNotificationIds.current = new Set(nextNotifications.map((notification) => String(notification.id)));
+      notificationsInitialized.current = true;
+      setNotifications(nextNotifications);
+    } catch (error) {
+      setErrorMessage(error.response?.data?.error || 'Impossible de charger les notifications.');
     }
-  };
+  }, [headers, token]);
+
+  const fetchMessages = useCallback(async (room) => {
+    if (!room) {
+      setMessages([]);
+      return;
+    }
+    try {
+      const res = await axios.get('/api/messages', { params: { room }, headers });
+      const nextMessages = res.data?.data || [];
+      setMessages((currentMessages) => {
+        const unchanged = currentMessages.length === nextMessages.length
+          && currentMessages.every((message, index) => (
+            String(message.id) === String(nextMessages[index].id)
+            && message.content === nextMessages[index].content
+          ));
+        return unchanged ? currentMessages : nextMessages;
+      });
+    } catch (error) {
+      setErrorMessage(error.response?.data?.error || 'Impossible de charger les messages.');
+    }
+  }, [headers]);
+
+  const markRoomRead = useCallback(async (room) => {
+    if (!room) return;
+    try {
+      await axios.post('/api/notifications/read-room', { room }, { headers });
+    } catch (error) {
+      setErrorMessage(error.response?.data?.error || 'Impossible de mettre à jour les notifications.');
+    }
+  }, [headers]);
 
   useEffect(() => {
-    if (isAdmin) fetchRooms();
+    fetchRooms();
     fetchNotifications();
-    // request notification permission for admin proactively
-    if (isAdmin && typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted') {
-      Notification.requestPermission().catch(() => {});
-    }
-  }, [isAdmin, token]);
+  }, [fetchNotifications, fetchRooms]);
 
   useEffect(() => {
     if (!selectedRoom) return;
-
-    const fetchMessages = async () => {
-      try {
-        const res = await axios.get('/api/messages', { params: { room: selectedRoom }, headers });
-        if (res.data && res.data.data) setMessages(res.data.data);
-      } catch (e) {
-        // ignore
-      }
-    };
-
-    fetchMessages();
-  }, [selectedRoom, token]);
+    setMessages([]);
+    shouldAutoScroll.current = true;
+    fetchMessages(selectedRoom);
+    markRoomRead(selectedRoom).then(fetchNotifications);
+  }, [fetchMessages, fetchNotifications, markRoomRead, selectedRoom]);
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      if (isAdmin) fetchRooms();
-      fetchNotifications();
+    const intervalId = window.setInterval(async () => {
+      await fetchRooms();
       if (selectedRoom) {
-        axios.get('/api/messages', { params: { room: selectedRoom }, headers })
-          .then((res) => res.data && res.data.data && setMessages(res.data.data))
-          .catch(() => {});
+        await fetchMessages(selectedRoom);
+        await markRoomRead(selectedRoom);
       }
-    }, 5000);
-
-    return () => clearInterval(intervalId);
-  }, [isAdmin, selectedRoom, token]);
+      await fetchNotifications();
+    }, 4000);
+    return () => window.clearInterval(intervalId);
+  }, [fetchMessages, fetchNotifications, fetchRooms, markRoomRead, selectedRoom]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (shouldAutoScroll.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
+  const unreadNotifications = notifications.filter((notification) => !notification.read);
   const handleSend = async (event) => {
-    if (event) event.preventDefault();
-    if (!newMessage.trim() || !selectedRoom) return;
+    event.preventDefault();
+    const content = newMessage.trim();
+    if (!content || !selectedRoom || isSending) return;
 
+    setIsSending(true);
+    shouldAutoScroll.current = true;
+    setErrorMessage('');
     try {
-      await axios.post('/api/messages', { room: selectedRoom, content: newMessage.trim() }, { headers });
+      await axios.post('/api/messages', { room: selectedRoom, content }, { headers });
       setNewMessage('');
-      const res = await axios.get('/api/messages', { params: { room: selectedRoom }, headers });
-      if (res.data && res.data.data) setMessages(res.data.data);
-    } catch (e) {
-      console.error(e);
+      await Promise.all([fetchMessages(selectedRoom), fetchRooms(), fetchNotifications()]);
+    } catch (error) {
+      setErrorMessage(error.response?.data?.error || "Impossible d'envoyer le message.");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleDelete = async (message) => {
+    if (!window.confirm('Supprimer ce message ?')) return;
+    try {
+      await axios.delete(`/api/messages/${message.id}`, { headers });
+      await fetchMessages(selectedRoom);
+    } catch (error) {
+      setErrorMessage(error.response?.data?.error || 'Impossible de supprimer le message.');
+    }
+  };
+
+  const handleEdit = async (message) => {
+    const content = editText.trim();
+    if (!content) {
+      setErrorMessage('Le message ne peut pas être vide.');
+      return;
+    }
+    try {
+      await axios.put(`/api/messages/${message.id}`, { content }, { headers });
+      setEditId(null);
+      setEditText('');
+      await fetchMessages(selectedRoom);
+    } catch (error) {
+      setErrorMessage(error.response?.data?.error || 'Impossible de modifier le message.');
+    }
+  };
+
+  const handleNotificationClick = async (notification) => {
+    try {
+      if (notification.room) {
+        setSelectedRoom(notification.room);
+        await markRoomRead(notification.room);
+      } else {
+        await axios.post(`/api/notifications/${notification.id}/read`, {}, { headers });
+      }
+      await fetchNotifications();
+      setNotificationOpen(false);
+    } catch (error) {
+      setErrorMessage(error.response?.data?.error || 'Impossible de mettre à jour la notification.');
+    }
+  };
+
+  const enableDesktopNotifications = async () => {
+    if (!('Notification' in window)) {
+      setErrorMessage('Les notifications du navigateur ne sont pas disponibles.');
+      return;
+    }
+    const permission = await window.Notification.requestPermission();
+    if (permission !== 'granted') {
+      setErrorMessage("L'autorisation des notifications a été refusée.");
     }
   };
 
@@ -133,139 +198,184 @@ const MessageBox = ({ onClose }) => {
       <div className={`message-panel ${minimized ? 'minimized' : ''}`}>
         <div className="message-header">
           <div className="header-left">
-            <div className="header-avatar">💬</div>
+            <div className="header-avatar" aria-hidden="true">💬</div>
             <div>
               <div className="header-title">Messagerie</div>
-              <div className="header-sub">Client ↔ Admin</div>
+              <div className="header-sub">Client ↔ Admin · actualisation automatique</div>
             </div>
-            {notificationCount > 0 && (
-              <div className="header-badge">{notificationCount}</div>
-            )}
+            <button
+              type="button"
+              className="header-badge"
+              aria-label={`${unreadNotifications.length} notification(s) non lue(s)`}
+              aria-expanded={notificationOpen}
+              onClick={() => setNotificationOpen((isOpen) => !isOpen)}
+            >
+              {unreadNotifications.length}
+            </button>
           </div>
           <div className="header-actions">
-             <button className="btn-action" title={minimized ? 'Restaurer' : 'Minimiser'} onClick={() => { setMinimized(v => !v); window.dispatchEvent(new CustomEvent('toggleChatMinimize')); }}>{minimized ? '+' : '—'}</button>
-             {onClose && <button className="btn-action" title="Fermer" onClick={onClose}>×</button>}
+            <button
+              type="button"
+              className="btn-action"
+              title={minimized ? 'Restaurer' : 'Réduire'}
+              aria-label={minimized ? 'Restaurer la messagerie' : 'Réduire la messagerie'}
+              aria-expanded={!minimized}
+              onClick={() => setMinimized((value) => !value)}
+            >
+              {minimized ? '+' : '—'}
+            </button>
+            {onClose && <button type="button" className="btn-action" title="Fermer" onClick={onClose}>×</button>}
           </div>
-          {/* Floating unread bubble above the panel */}
-          {notificationCount > 0 && (
-             <div className="message-unread-bubble" aria-hidden>
-              <span>{notificationCount}</span>
-             </div>
-          )}
         </div>
-        <div className="message-body">
-          {isAdmin && (
-            <div className="message-rooms">
-              <div className="rooms-title">Conversations</div>
-              <div className="rooms-list">
-                {rooms.length === 0 ? (
-                  <div className="rooms-empty">Aucune conversation</div>
-                ) : (
-                  rooms.map((room) => (
-                    <button
-                      key={room.id}
-                      className={`room-item ${selectedRoom === room.name ? 'active' : ''}`}
-                      onClick={() => setSelectedRoom(room.name)}
-                    >
-                      <span className="room-initial">{room.name.replace(/^dm:/, '').charAt(0).toUpperCase()}</span>
-                      <span className="room-name">{room.name.replace(/^dm:/, '')}</span>
-                    </button>
-                  ))
-                )}
+
+        {notificationOpen && (
+          <section className="message-notifications" aria-label="Notifications de messagerie">
+            <div className="message-notifications-heading">
+              <strong>Notifications</strong>
+              {'Notification' in window && window.Notification.permission !== 'granted' && (
+                <button type="button" onClick={enableDesktopNotifications}>Activer sur cet appareil</button>
+              )}
+            </div>
+            {notifications.length === 0 ? (
+              <p className="message-notifications-empty">Aucune notification.</p>
+            ) : (
+              <div className="message-notifications-list">
+                {notifications.slice(0, 20).map((notification) => (
+                  <button
+                    type="button"
+                    key={notification.id}
+                    className={`message-notification ${notification.read ? '' : 'unread'}`}
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    <span>{notification.message}</span>
+                    <small>{new Date(notification.created_at).toLocaleString()}</small>
+                  </button>
+                ))}
               </div>
-            </div>
-          )}
+            )}
+          </section>
+        )}
 
-          <div className="message-content">
-            <div className="conversation-header small text-muted">
-              {isAdmin ? `Conversation : ${selectedRoom ? selectedRoom.replace(/^dm:/, '') : 'Aucune'}` : 'Votre conversation client/admin'}
-            </div>
+        {!minimized && (
+          <div className="message-body">
+            {isAdmin && (
+              <aside className="message-rooms">
+                <div className="rooms-title">Conversations</div>
+                <div className="rooms-list">
+                  {rooms.length === 0 ? (
+                    <div className="rooms-empty">Aucune conversation</div>
+                  ) : rooms.map((room) => {
+                    const roomUnread = unreadNotifications.filter((notification) => notification.room === room.name).length;
+                    return (
+                      <button
+                        type="button"
+                        key={room.id}
+                        className={`room-item ${selectedRoom === room.name ? 'active' : ''}`}
+                        onClick={() => setSelectedRoom(room.name)}
+                      >
+                        <span className="room-initial">{room.name.replace(/^dm:/, '').charAt(0).toUpperCase()}</span>
+                        <span className="room-name">{room.name.replace(/^dm:/, '')}</span>
+                        {roomUnread > 0 && <span className="room-unread">{roomUnread}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </aside>
+            )}
 
-            <div className="message-list" role="log" aria-live="polite">
-              {messages.length === 0 ? (
-                <div className="empty-state">Aucun message pour le moment.</div>
-              ) : (
-                messages.map((m) => {
-                  const isMine = m.sender_name === username;
-                  const canEdit = isMine || isAdmin; // allow edit for own messages and admin
-                  const canDelete = isMine || isAdmin; // allow admin to delete
+            <div className="message-content">
+              <div className="conversation-header small text-muted">
+                {isAdmin
+                  ? `Conversation : ${selectedRoom ? selectedRoom.replace(/^dm:/, '') : 'Aucune'}`
+                  : 'Votre conversation client/admin'}
+              </div>
+              {errorMessage && <div className="message-error" role="alert">{errorMessage}</div>}
+
+              <div
+                className="message-list"
+                role="log"
+                aria-live="polite"
+                onScroll={(event) => {
+                  const element = event.currentTarget;
+                  shouldAutoScroll.current = element.scrollHeight - element.scrollTop - element.clientHeight < 80;
+                }}
+              >
+                {!selectedRoom ? (
+                  <div className="empty-state">Sélectionnez une conversation pour commencer.</div>
+                ) : messages.length === 0 ? (
+                  <div className="empty-state">Aucun message pour le moment. Écrivez le premier message.</div>
+                ) : messages.map((message) => {
+                  const isMine = message.sender_name === username;
+                  const canManage = isAdmin || isMine;
                   return (
-                    <div key={m.id} className={`message-bubble ${isMine ? 'mine' : 'theirs'}`}>
-                      {!isMine && <div className="bubble-avatar">{m.sender_name.charAt(0).toUpperCase()}</div>}
+                    <div key={message.id} className={`message-bubble ${isMine ? 'mine' : 'theirs'}`}>
+                      {!isMine && <div className="bubble-avatar">{message.sender_name?.charAt(0).toUpperCase() || '?'}</div>}
                       <div className="bubble-content">
-                        <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px'}}>
-                          <div className="bubble-meta">{m.sender_name} • <span className="time">{new Date(m.created_at).toLocaleTimeString()}</span></div>
-                          <div style={{display:'flex', gap:6}}>
-                            {canEdit && editId !== m.id && (
-                              <button className="btn-action" title="Modifier" onClick={() => { setEditId(m.id); setEditText(m.content); }}>✎</button>
-                            )}
-                            {canDelete && (
-                              <button className="btn-action" title="Supprimer" onClick={async () => {
-                                if (!window.confirm('Supprimer ce message ?')) return;
-                                try {
-                                  await axios.delete(`/api/messages/${m.id}`, { headers });
-                                  const res = await axios.get('/api/messages', { params: { room: selectedRoom }, headers });
-                                  if (res.data && res.data.data) setMessages(res.data.data);
-                                } catch (e) {
-                                  console.error(e);
-                                  alert('Impossible de supprimer le message');
-                                }
-                              }}>🗑</button>
-                            )}
+                        <div className="bubble-message-heading">
+                          <div className="bubble-meta">
+                            {message.sender_name} · <span className="time">{new Date(message.created_at).toLocaleTimeString()}</span>
                           </div>
+                          {canManage && (
+                            <div className="bubble-actions">
+                              {editId !== message.id && (
+                                <button
+                                  type="button"
+                                  className="btn-action"
+                                  title="Modifier"
+                                  aria-label="Modifier ce message"
+                                  onClick={() => { setEditId(message.id); setEditText(message.content); }}
+                                >✎</button>
+                              )}
+                              <button
+                                type="button"
+                                className="btn-action"
+                                title="Supprimer"
+                                aria-label="Supprimer ce message"
+                                onClick={() => handleDelete(message)}
+                              >🗑</button>
+                            </div>
+                          )}
                         </div>
-
-                        {editId === m.id ? (
-                          <div style={{display:'flex', flexDirection:'column', gap:8}}>
-                            <textarea value={editText} onChange={(e) => setEditText(e.target.value)} rows={3} />
-                            <div style={{display:'flex', gap:8}}>
-                              <button className="btn" onClick={async () => {
-                                try {
-                                  const trimmed = editText.trim();
-                                  if (!trimmed) { alert('Le message ne peut pas être vide'); return; }
-                                  await axios.put(`/api/messages/${m.id}`, { content: trimmed }, { headers });
-                                  setEditId(null);
-                                  setEditText('');
-                                  const res = await axios.get('/api/messages', { params: { room: selectedRoom }, headers });
-                                  if (res.data && res.data.data) setMessages(res.data.data);
-                                } catch (e) {
-                                  console.error(e);
-                                  alert('Impossible de mettre à jour le message');
-                                }
-                              }}>Enregistrer</button>
-                              <button className="btn" onClick={() => { setEditId(null); setEditText(''); }}>Annuler</button>
+                        {editId === message.id ? (
+                          <div className="message-edit">
+                            <textarea value={editText} onChange={(event) => setEditText(event.target.value)} rows={3} />
+                            <div>
+                              <button type="button" className="send-btn" onClick={() => handleEdit(message)}>Enregistrer</button>
+                              <button type="button" className="message-cancel-btn" onClick={() => { setEditId(null); setEditText(''); }}>Annuler</button>
                             </div>
                           </div>
                         ) : (
-                          <div className="bubble-text">{m.content}</div>
+                          <div className="bubble-text">{message.content}</div>
                         )}
-
                       </div>
                     </div>
                   );
-                })
-              )}
-              <div ref={messagesEndRef} />
-            </div>
+                })}
+                <div ref={messagesEndRef} />
+              </div>
 
-            <form onSubmit={handleSend} className="message-input" role="search">
-              <textarea
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend(e);
-                  }
-                }}
-                placeholder={selectedRoom ? 'Tapez un message...' : 'Sélectionnez une conversation...'}
-                disabled={!selectedRoom}
-                rows={1}
-              />
-              <button type="submit" className="send-btn" disabled={!selectedRoom || !newMessage.trim()} aria-label="Envoyer">Envoyer</button>
-            </form>
+              <form onSubmit={handleSend} className="message-input">
+                <textarea
+                  value={newMessage}
+                  onChange={(event) => setNewMessage(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                      event.preventDefault();
+                      handleSend(event);
+                    }
+                  }}
+                  placeholder={selectedRoom ? 'Tapez un message...' : 'Sélectionnez une conversation...'}
+                  disabled={!selectedRoom || isSending}
+                  rows={1}
+                  aria-label="Votre message"
+                />
+                <button type="submit" className="send-btn" disabled={!selectedRoom || !newMessage.trim() || isSending}>
+                  {isSending ? 'Envoi…' : 'Envoyer'}
+                </button>
+              </form>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
