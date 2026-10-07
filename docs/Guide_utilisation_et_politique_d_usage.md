@@ -22,7 +22,7 @@ Elle vise à faciliter la consultation d’informations, le suivi des activités
 - Suivi des équipements : nouveaux, endommagés, fonctionnels et réparés.
 - Création, consultation et suivi de missions et de leurs interventions.
 - Rédaction et consultation de rapports.
-- Gestion des comptes et des rôles par un administrateur.
+- Gestion des comptes et des rôles par le super-administrateur principal.
 - Messagerie entre les utilisateurs et l’administration, avec notifications et indicateur de messages non lus.
 
 Les fonctions disponibles peuvent évoluer selon les décisions et les besoins du ministère.
@@ -69,9 +69,9 @@ Les rapports permettent de consigner des informations utiles au suivi des activi
 
 ### 3.6 Comptes utilisateurs
 
-La rubrique de gestion des utilisateurs est réservée à l’administrateur. Elle permet notamment d’ajouter un compte, de modifier ses coordonnées ou son rôle, et de supprimer un compte.
+La gestion des utilisateurs est réservée au super-administrateur principal. Elle permet notamment d’ajouter un compte, de modifier ses coordonnées ou de lui attribuer le rôle d’utilisateur ou d’administrateur ordinaire, et de supprimer un compte. Le compte principal super-administrateur ne peut pas être supprimé ou rétrogradé depuis cette rubrique.
 
-L’administrateur doit attribuer le rôle correspondant aux responsabilités effectives de la personne et retirer les accès qui ne sont plus nécessaires, conformément aux procédures qui seront validées par le ministère.
+Les administrateurs ordinaires conservent les fonctions opérationnelles prévues par la plateforme, mais ne peuvent pas gérer les comptes ni modifier les rôles. Le super-administrateur attribue le rôle correspondant aux responsabilités effectives de la personne et retire les accès qui ne sont plus nécessaires, conformément aux procédures qui seront validées par le ministère.
 
 ### 3.7 Messagerie et notifications
 
@@ -95,7 +95,15 @@ La présente proposition s’adresse à toute personne disposant d’un compte a
 
 **Catégories exactes d’utilisateurs et responsables d’approbation : [à valider par le ministère].**
 
-### 4.2 Usage autorisé
+### 4.2 Niveaux d’accès proposés
+
+- **Super-administrateur principal :** compte principal désigné par le ministère. Il gère les utilisateurs et leurs rôles et dispose des fonctions administratives de la plateforme.
+- **Administrateur :** personnel autorisé aux opérations courantes et aux fonctions administratives prévues, sans accès à la gestion des comptes et des rôles.
+- **Utilisateur :** accès aux rubriques nécessaires à ses missions, selon les autorisations de la plateforme.
+
+Dans la version actuelle, le compte principal `Alpha` est promu au rôle technique `super_admin` au démarrage du serveur. Les autres comptes ayant le rôle `administrateur` restent des administrateurs ordinaires. Les droits associés et l’identité du compte principal doivent être confirmés par l’autorité compétente avant déploiement institutionnel.
+
+### 4.3 Usage autorisé
 
 La plateforme doit être utilisée uniquement dans le cadre des missions professionnelles autorisées et pour les finalités définies par le ministère. Chaque utilisateur doit :
 
@@ -106,7 +114,7 @@ La plateforme doit être utilisée uniquement dans le cadre des missions profess
 - signaler sans délai une erreur, un accès inhabituel, une perte d’identifiants ou un incident de sécurité au contact désigné ;
 - se déconnecter des appareils partagés et protéger ces appareils contre les accès non autorisés.
 
-### 4.3 Usages interdits
+### 4.4 Usages interdits
 
 Il est interdit :
 
@@ -118,13 +126,13 @@ Il est interdit :
 - de tenter de contourner les contrôles d’accès, d’altérer le service ou d’accéder aux comptes d’autrui ;
 - de supprimer ou modifier des informations dans le but de dissimuler une erreur, une activité ou un incident.
 
-### 4.4 Protection des comptes
+### 4.5 Protection des comptes
 
 Chaque utilisateur est responsable de l’usage de son compte. Il doit choisir un mot de passe robuste, ne pas le réutiliser sur des services non autorisés et le renouveler conformément aux consignes qui seront fixées par le ministère.
 
 En cas de suspicion de compromission, l’utilisateur doit prévenir immédiatement **[service ou personne à contacter]**. L’administrateur devra suspendre ou réinitialiser l’accès selon la procédure approuvée.
 
-### 4.5 Confidentialité et protection des données
+### 4.6 Confidentialité et protection des données
 
 Les informations saisies dans la plateforme doivent être limitées à ce qui est nécessaire aux activités autorisées. Les utilisateurs doivent éviter d’inscrire des données personnelles sensibles dans les champs libres et les conversations, sauf autorisation explicite et garanties adaptées.
 
@@ -140,13 +148,13 @@ Avant mise en service institutionnelle, le ministère doit déterminer et docume
 
 La durée de conservation ne doit pas être inventée par l’utilisateur ou l’administrateur technique : elle doit être fixée par l’autorité compétente et conforme aux textes applicables.
 
-### 4.6 Administration, modération et traçabilité
+### 4.7 Administration, modération et traçabilité
 
-Les comptes administrateurs doivent être limités aux personnes désignées. Leurs droits doivent être utilisés pour l’administration du service, la gestion des comptes et la modération nécessaire, et non pour un usage personnel.
+Les comptes administrateurs doivent être limités aux personnes désignées. La gestion des comptes et des rôles est réservée au super-administrateur principal ; les administrateurs ordinaires disposent uniquement des fonctions opérationnelles qui leur sont accordées. Tous les droits doivent être utilisés pour les besoins du service, et non pour un usage personnel.
 
 La suppression ou la modification d’un message peut affecter l’historique visible de la conversation. Le ministère devrait donc préciser les règles de modération, de conservation des preuves et de traitement des demandes de suppression avant le déploiement officiel.
 
-### 4.7 Disponibilité et sauvegardes
+### 4.8 Disponibilité et sauvegardes
 
 La disponibilité du service dépend de son hébergement et de son infrastructure. Avant un usage institutionnel, un responsable doit être désigné pour les sauvegardes, les tests de restauration, les mises à jour et le traitement des interruptions.
 
@@ -154,7 +162,7 @@ La disponibilité du service dépend de son hébergement et de son infrastructur
 
 Les utilisateurs ne doivent pas considérer la plateforme comme l’unique lieu de conservation d’un document officiel tant que les procédures d’archivage institutionnelles ne le prévoient pas.
 
-### 4.8 Signalement et mesures en cas d’abus
+### 4.9 Signalement et mesures en cas d’abus
 
 Tout incident, contenu inapproprié, erreur importante ou accès suspect doit être signalé à **[contact du ministère / service informatique]** avec les éléments utiles, sans diffuser publiquement les données concernées.
 
@@ -165,9 +173,10 @@ Les mesures applicables en cas de non-respect de cette politique relèvent des r
 ## 5. Rôles et responsabilités proposés
 
 | Rôle | Responsabilités principales |
-|---|---|
+| --- | --- |
 | Utilisateur | Protéger son compte, saisir des informations fiables, respecter la confidentialité et signaler les incidents. |
-| Administrateur de la plateforme | Gérer les comptes et les rôles, assurer la modération nécessaire et coordonner le suivi technique selon son mandat. |
+| Super-administrateur principal | Gérer les comptes et les rôles, et assurer les fonctions centrales d’administration qui lui sont confiées. |
+| Administrateur | Réaliser les opérations courantes et la modération nécessaire, sans gérer les comptes ni attribuer les rôles. |
 | Responsable métier | Définir les règles de saisie, vérifier la qualité des informations et déterminer les besoins de suivi. |
 | Responsable informatique / hébergeur | Administrer l’infrastructure, les mises à jour, les sauvegardes et la sécurité selon le mandat reçu. |
 | Autorité ministérielle compétente | Approuver les finalités, les règles de gouvernance, les durées de conservation et la politique officielle. |

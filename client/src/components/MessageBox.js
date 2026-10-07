@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const MessageBox = ({ onClose }) => {
   const username = sessionStorage.getItem('username');
-  const isAdmin = sessionStorage.getItem('role') === 'administrateur';
+  const isAdmin = ['administrateur', 'super_admin'].includes(sessionStorage.getItem('role'));
   const token = sessionStorage.getItem('token');
   const headers = useMemo(() => (token ? { Authorization: `Bearer ${token}` } : {}), [token]);
   const [rooms, setRooms] = useState([]);

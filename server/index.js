@@ -69,16 +69,16 @@ const ensureTables = async () => {
                 console.log('Interventions column check error:', alterErr.message);
             }
             
-            // Seed Admin Alpha
+            // Seed the primary super administrator without changing existing credentials.
             const hash = await bcrypt.hash('Mousta@2025', 10);
-            const existingAdmin = await sql`SELECT * FROM users WHERE username = 'Alpha' OR email = 'admin@menfop.com'`;
+            const existingAdmin = await sql`SELECT * FROM users WHERE username = 'Alpha'`;
             if (existingAdmin.rows.length === 0) {
-                await sql`INSERT INTO users (username, email, password, role) VALUES ('Alpha', 'admin@menfop.com', ${hash}, 'administrateur')`;
-                console.log('Seed: Admin Alpha created in Postgres.');
+                await sql`INSERT INTO users (username, email, password, role) VALUES ('Alpha', 'admin@menfop.com', ${hash}, 'super_admin')`;
+                console.log('Seed: primary super administrator Alpha created in Postgres.');
             } else {
-                // Ensure Alpha has the right role and email if already exists
-                await sql`UPDATE users SET email = 'admin@menfop.com', role = 'administrateur' WHERE username = 'Alpha' AND (email IS NULL OR role != 'administrateur')`;
+                await sql`UPDATE users SET email = COALESCE(email, 'admin@menfop.com'), role = 'super_admin' WHERE username = 'Alpha'`;
             }
+            await sql`UPDATE users SET role = 'administrateur' WHERE role = 'super_admin' AND username <> 'Alpha'`;
             tablesEnsured = true;
         } catch (err) {
             console.error('Postgres init error detail:', err);
@@ -118,20 +118,29 @@ const ensureTables = async () => {
                 dbSQLite.all('PRAGMA table_info(notifications)', (schemaErr, columns) => {
                     if (schemaErr) return reject(schemaErr);
                     const continueInitialization = () => {
-                        dbSQLite.get('SELECT * FROM users WHERE username = ? OR email = ?', ['Alpha', 'admin@menfop.com'], (err, row) => {
+                        dbSQLite.get('SELECT * FROM users WHERE username = ?', ['Alpha'], (err, row) => {
                             if (err) return reject(err);
                             if (!row) {
                                 bcrypt.hash('Mousta@2025', 10, (hashErr, hash) => {
                                     if (hashErr) return reject(hashErr);
-                                    dbSQLite.run('INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)', ['Alpha', 'admin@menfop.com', hash, 'administrateur'], (insertErr) => {
+                                    dbSQLite.run('INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)', ['Alpha', 'admin@menfop.com', hash, 'super_admin'], (insertErr) => {
                                         if (insertErr) return reject(insertErr);
+                                        dbSQLite.run("UPDATE users SET role = 'administrateur' WHERE role = 'super_admin' AND username <> 'Alpha'", (demoteErr) => {
+                                            if (demoteErr) return reject(demoteErr);
+                                            tablesEnsured = true;
+                                            resolve();
+                                        });
+                                    });
+                                });
+                            } else {
+                                dbSQLite.run("UPDATE users SET email = COALESCE(email, 'admin@menfop.com'), role = 'super_admin' WHERE username = 'Alpha'", (promoteErr) => {
+                                    if (promoteErr) return reject(promoteErr);
+                                    dbSQLite.run("UPDATE users SET role = 'administrateur' WHERE role = 'super_admin' AND username <> 'Alpha'", (demoteErr) => {
+                                        if (demoteErr) return reject(demoteErr);
                                         tablesEnsured = true;
                                         resolve();
                                     });
                                 });
-                            } else {
-                                tablesEnsured = true;
-                                resolve();
                             }
                         });
                     };
@@ -161,48 +170,69 @@ app.use(async (req, res, next) => {
     }
 });
 
-app.get('/api/migrate-db', async (req, res) => {
-    try {
-        if (usePostgres) {
-            await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`;
-            await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT`;
-            try { await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON users(email)`; } catch(e) {}
-            try { await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_phone_idx ON users(phone)`; } catch(e) {}
-            
-            const hash = await require('bcryptjs').hash('Mousta@2025', 10);
-            const check = await sql`SELECT * FROM users WHERE username = 'Alpha'`;
-            if (check.rows.length > 0) {
-                await sql`UPDATE users SET email = 'admin@menfop.com', password = ${hash}, role = 'administrateur' WHERE username = 'Alpha'`;
-            } else {
-                await sql`INSERT INTO users (username, email, password, role) VALUES ('Alpha', 'admin@menfop.com', ${hash}, 'administrateur')`;
-            }
-            res.json({ success: true, message: "Postgres migration completed." });
-        } else {
-            res.json({ success: true, message: "SQLite used, no remote migration needed." });
-        }
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
     if (token == null) return res.sendStatus(401);
 
-    jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret', (err, user) => {
+    jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret', async (err, user) => {
         if (err) return res.sendStatus(403);
-        req.user = user;
-        next();
+        try {
+            let currentUser;
+            if (usePostgres) {
+                currentUser = (await sql`SELECT id, username, role FROM users WHERE id = ${user.id}`).rows[0];
+            } else {
+                currentUser = await new Promise((resolve, reject) => dbSQLite.get(
+                    'SELECT id, username, role FROM users WHERE id = ?',
+                    [user.id],
+                    (queryErr, row) => queryErr ? reject(queryErr) : resolve(row)
+                ));
+            }
+            if (!currentUser) return res.sendStatus(401);
+            req.user = { id: currentUser.id, username: currentUser.username || user.username, role: currentUser.role };
+            next();
+        } catch (queryErr) {
+            console.error('Authentication role lookup failed:', queryErr);
+            res.status(500).json({ error: 'Impossible de vérifier les autorisations du compte.' });
+        }
     });
 };
 
 const authorizeRole = (role) => {
     return (req, res, next) => {
-        if (req.user && req.user.role === role) next();
+        const hasRequiredRole = req.user && (
+            req.user.role === role
+            || (role === 'administrateur' && req.user.role === 'super_admin')
+        );
+        if (hasRequiredRole) next();
         else res.status(403).json({ error: "Accès refusé" });
     };
 };
+
+const isAdministrator = (role) => role === 'administrateur' || role === 'super_admin';
+
+app.get('/api/me', authenticateToken, (req, res) => {
+    res.json({ data: { id: req.user.id, username: req.user.username, role: req.user.role } });
+});
+
+app.get('/api/migrate-db', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
+    try {
+        if (!usePostgres) {
+            return res.json({ success: true, message: "SQLite used, no remote migration needed." });
+        }
+        await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`;
+        await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT`;
+        await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON users(email)`;
+        await sql`CREATE UNIQUE INDEX IF NOT EXISTS users_phone_idx ON users(phone)`;
+        const primaryAdmin = (await sql`SELECT id FROM users WHERE username = 'Alpha'`).rows[0];
+        if (!primaryAdmin) return res.status(404).json({ error: "Le compte principal Alpha n'existe pas." });
+        await sql`UPDATE users SET email = COALESCE(email, 'admin@menfop.com'), role = 'super_admin' WHERE username = 'Alpha'`;
+        await sql`UPDATE users SET role = 'administrateur' WHERE role = 'super_admin' AND username <> 'Alpha'`;
+        res.json({ success: true, message: "Migration des rôles administrateur terminée." });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // --- API Routes ---
 
@@ -624,7 +654,7 @@ app.get('/api/dashboard/equipment-by-establishment', authenticateToken, async (r
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
-app.get('/api/users', authenticateToken, authorizeRole('administrateur'), async (req, res) => {
+app.get('/api/users', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
     try {
         let rows;
         if (usePostgres) rows = (await sql`SELECT id, username, email, phone, role FROM users`).rows;
@@ -633,7 +663,7 @@ app.get('/api/users', authenticateToken, authorizeRole('administrateur'), async 
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
-app.post('/api/users', authenticateToken, authorizeRole('administrateur'), async (req, res) => {
+app.post('/api/users', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
     let { username, email, phone, password, role } = req.body;
     if (username) username = username.trim();
     if (email) email = email.trim();
@@ -642,6 +672,9 @@ app.post('/api/users', authenticateToken, authorizeRole('administrateur'), async
 
     if (phone && !/^\d{8}$/.test(phone)) {
         return res.status(400).json({ error: "Le numéro de téléphone doit comporter exactement 8 chiffres." });
+    }
+    if (!['utilisateur', 'administrateur'].includes(role || 'utilisateur')) {
+        return res.status(400).json({ error: "Le rôle super-administrateur est réservé au compte principal." });
     }
 
     try {
@@ -658,7 +691,7 @@ app.post('/api/users', authenticateToken, authorizeRole('administrateur'), async
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
-app.put('/api/users/:id', authenticateToken, authorizeRole('administrateur'), async (req, res) => {
+app.put('/api/users/:id', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
     const { id } = req.params;
     let { username, email, phone, password, role } = req.body;
     if (username) username = username.trim();
@@ -669,8 +702,20 @@ app.put('/api/users/:id', authenticateToken, authorizeRole('administrateur'), as
     if (phone && !/^\d{8}$/.test(phone)) {
         return res.status(400).json({ error: "Le numéro de téléphone doit comporter exactement 8 chiffres." });
     }
+    if (!['utilisateur', 'administrateur'].includes(role)) {
+        return res.status(400).json({ error: "Le rôle super-administrateur est réservé au compte principal." });
+    }
 
     try {
+        let targetUser;
+        if (usePostgres) {
+            targetUser = (await sql`SELECT role FROM users WHERE id = ${id}`).rows[0];
+        } else {
+            targetUser = await new Promise((resolve, reject) => dbSQLite.get('SELECT role FROM users WHERE id = ?', [id], (err, row) => err ? reject(err) : resolve(row)));
+        }
+        if (!targetUser) return res.status(404).json({ error: "Utilisateur non trouvé." });
+        if (targetUser.role === 'super_admin') return res.status(403).json({ error: "Le compte principal ne peut pas être modifié depuis cette page." });
+
         if (password) {
             const hash = await bcrypt.hash(password, 10);
             if (usePostgres) {
@@ -689,12 +734,18 @@ app.put('/api/users/:id', authenticateToken, authorizeRole('administrateur'), as
     } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
-app.delete('/api/users/:id', authenticateToken, authorizeRole('administrateur'), async (req, res) => {
+app.delete('/api/users/:id', authenticateToken, authorizeRole('super_admin'), async (req, res) => {
     const { id } = req.params;
     try {
         if (usePostgres) {
+            const targetUser = (await sql`SELECT role FROM users WHERE id = ${id}`).rows[0];
+            if (!targetUser) return res.status(404).json({ error: "Utilisateur non trouvé." });
+            if (targetUser.role === 'super_admin') return res.status(403).json({ error: "Le compte principal ne peut pas être supprimé." });
             await sql`DELETE FROM users WHERE id = ${id}`;
         } else {
+            const targetUser = await new Promise((resolve, reject) => dbSQLite.get('SELECT role FROM users WHERE id = ?', [id], (err, row) => err ? reject(err) : resolve(row)));
+            if (!targetUser) return res.status(404).json({ error: "Utilisateur non trouvé." });
+            if (targetUser.role === 'super_admin') return res.status(403).json({ error: "Le compte principal ne peut pas être supprimé." });
             await new Promise((res, rej) => dbSQLite.run('DELETE FROM users WHERE id = ?', [id], (err) => err ? rej(err) : res()));
         }
         res.json({ message: "Utilisateur supprimé avec succès" });
@@ -706,12 +757,12 @@ app.delete('/api/users/:id', authenticateToken, authorizeRole('administrateur'),
 app.get('/api/rooms', authenticateToken, async (req, res) => {
     try {
         if (usePostgres) {
-            const rows = req.user.role === 'administrateur'
+            const rows = isAdministrator(req.user.role)
                 ? (await sql`SELECT * FROM rooms WHERE name LIKE 'dm:%' ORDER BY id DESC`).rows
                 : (await sql`SELECT * FROM rooms WHERE name = ${'dm:' + req.user.username}`).rows;
             res.json({ success: true, data: rows });
         } else {
-            const isAdmin = req.user.role === 'administrateur';
+            const isAdmin = isAdministrator(req.user.role);
             const query = isAdmin
                 ? "SELECT * FROM rooms WHERE name LIKE 'dm:%' ORDER BY id DESC"
                 : 'SELECT * FROM rooms WHERE name = ?';
@@ -728,7 +779,7 @@ app.get('/api/messages', authenticateToken, async (req, res) => {
     const { room } = req.query;
     if (!room) return res.status(400).json({ error: 'room query required' });
     if (!String(room).startsWith('dm:')) return res.status(400).json({ error: 'invalid conversation' });
-    if (req.user.role !== 'administrateur' && room !== 'dm:' + req.user.username) {
+    if (!isAdministrator(req.user.role) && room !== 'dm:' + req.user.username) {
         return res.status(403).json({ error: 'Accès refusé à cette conversation' });
     }
     try {
@@ -752,12 +803,13 @@ app.post('/api/messages', authenticateToken, async (req, res) => {
     if (typeof room !== 'string' || !room.startsWith('dm:') || !cleanContent) {
         return res.status(400).json({ error: 'A conversation and message are required' });
     }
-    if (req.user.role !== 'administrateur' && room !== 'dm:' + sender_name) {
+    const isAdmin = isAdministrator(req.user.role);
+    if (!isAdmin && room !== 'dm:' + sender_name) {
         return res.status(403).json({ error: 'Accès refusé à cette conversation' });
     }
-    const recipientRole = req.user.role === 'administrateur' ? 'utilisateur' : 'administrateur';
-    const recipient = req.user.role === 'administrateur' ? room.slice(3) : 'administrateur';
-    const notificationText = req.user.role === 'administrateur'
+    const recipientRole = isAdmin ? 'utilisateur' : 'administrateur';
+    const recipient = isAdmin ? room.slice(3) : 'administrateur';
+    const notificationText = isAdmin
         ? `${sender_name || 'Administrateur'} vous a répondu`
         : `${sender_name || 'Utilisateur'} a envoyé un message`;
     try {
@@ -836,15 +888,15 @@ app.get('/api/notifications', authenticateToken, async (req, res) => {
         const role = req.user && req.user.role;
         const username = req.user && req.user.username;
         if (usePostgres) {
-            const rows = role === 'administrateur'
+            const rows = isAdministrator(role)
                 ? (await sql`SELECT * FROM notifications WHERE role = 'administrateur' OR target = 'administrateur' ORDER BY created_at DESC`).rows
                 : (await sql`SELECT * FROM notifications WHERE target = ${username} ORDER BY created_at DESC`).rows;
             res.json({ success: true, data: rows });
         } else {
-            const query = role === 'administrateur'
+            const query = isAdministrator(role)
                 ? "SELECT * FROM notifications WHERE role = 'administrateur' OR target = 'administrateur' ORDER BY created_at DESC"
                 : 'SELECT * FROM notifications WHERE target = ? ORDER BY created_at DESC';
-            const params = role === 'administrateur' ? [] : [username];
+            const params = isAdministrator(role) ? [] : [username];
             dbSQLite.all(query, params, (err, rows) => {
                 if (err) return res.status(400).json({ error: err.message });
                 res.json({ success: true, data: rows });
@@ -859,7 +911,7 @@ app.post('/api/notifications/:id/read', authenticateToken, async (req, res) => {
         if (usePostgres) {
             const notification = (await sql`SELECT target, role FROM notifications WHERE id = ${id}`).rows[0];
             if (!notification) return res.status(404).json({ error: 'Notification non trouvée' });
-            const canRead = req.user.role === 'administrateur'
+            const canRead = isAdministrator(req.user.role)
                 ? notification.role === 'administrateur'
                 : notification.target === req.user.username;
             if (!canRead) return res.status(403).json({ error: 'Accès refusé à cette notification' });
@@ -867,7 +919,7 @@ app.post('/api/notifications/:id/read', authenticateToken, async (req, res) => {
         } else {
             const notification = await new Promise((resolve, reject) => dbSQLite.get('SELECT target, role FROM notifications WHERE id = ?', [id], (err, row) => err ? reject(err) : resolve(row)));
             if (!notification) return res.status(404).json({ error: 'Notification non trouvée' });
-            const canRead = req.user.role === 'administrateur'
+            const canRead = isAdministrator(req.user.role)
                 ? notification.role === 'administrateur'
                 : notification.target === req.user.username;
             if (!canRead) return res.status(403).json({ error: 'Accès refusé à cette notification' });
@@ -882,21 +934,21 @@ app.post('/api/notifications/read-room', authenticateToken, async (req, res) => 
     if (typeof room !== 'string' || !room.startsWith('dm:')) {
         return res.status(400).json({ error: 'invalid conversation' });
     }
-    if (req.user.role !== 'administrateur' && room !== 'dm:' + req.user.username) {
+    if (!isAdministrator(req.user.role) && room !== 'dm:' + req.user.username) {
         return res.status(403).json({ error: 'Accès refusé à cette conversation' });
     }
     try {
         if (usePostgres) {
-            if (req.user.role === 'administrateur') {
+            if (isAdministrator(req.user.role)) {
                 await sql`UPDATE notifications SET read = true WHERE room = ${room} AND role = 'administrateur'`;
             } else {
                 await sql`UPDATE notifications SET read = true WHERE room = ${room} AND target = ${req.user.username}`;
             }
         } else {
-            const query = req.user.role === 'administrateur'
+            const query = isAdministrator(req.user.role)
                 ? "UPDATE notifications SET read = 1 WHERE room = ? AND role = 'administrateur'"
                 : 'UPDATE notifications SET read = 1 WHERE room = ? AND target = ?';
-            const params = req.user.role === 'administrateur' ? [room] : [room, req.user.username];
+            const params = isAdministrator(req.user.role) ? [room] : [room, req.user.username];
             await new Promise((resolve, reject) => dbSQLite.run(query, params, (err) => err ? reject(err) : resolve()));
         }
         res.json({ success: true });

@@ -30,7 +30,29 @@ const AppContent = () => {
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const location = useLocation();
 
-  useEffect(()=>{},[]);
+  useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    if (!token) return;
+    axios.get('/api/me', { headers: { Authorization: `Bearer ${token}` } })
+      .then((response) => {
+        const user = response.data?.data;
+        if (!user) return;
+        sessionStorage.setItem('username', user.username);
+        sessionStorage.setItem('role', user.role);
+        setUserRole(user.role);
+      })
+      .catch((error) => {
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('role');
+          sessionStorage.removeItem('username');
+          setIsAuthenticated(false);
+          setUserRole(null);
+        } else {
+          console.error('Unable to refresh current user permissions:', error);
+        }
+      });
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -129,7 +151,9 @@ const AppContent = () => {
               </div>
               <div className="user-info">
                 <span className="user-name text-truncate" title={username}>{username}</span>
-                <span className="user-role-label">{userRole}</span>
+                <span className="user-role-label">
+                  {userRole === 'super_admin' ? 'Super-administrateur' : userRole === 'administrateur' ? 'Administrateur' : userRole}
+                </span>
               </div>
             </div>
           )}
@@ -223,10 +247,10 @@ const AppContent = () => {
             {t('sidebar.view_reports')}
           </NavLink>
 
-          {userRole === 'administrateur' && (
+          {userRole === 'super_admin' && (
             <>
               <div className="sidebar-section-label px-3 pt-3 pb-1 text-uppercase small fw-bold text-danger" style={{ fontSize: '0.7rem', letterSpacing: '0.05em' }}>
-                Admin
+                Super administration
               </div>
               <NavLink to="/users" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''} text-danger`} onClick={() => setShowMobileMenu(false)}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-people-fill me-2" viewBox="0 0 16 16">
@@ -353,7 +377,7 @@ const AppContent = () => {
               <Route path="/new-mission" element={<PrivateRoute><MissionForm /></PrivateRoute>} />
               <Route path="/missions" element={<PrivateRoute><MissionsList /></PrivateRoute>} />
               <Route path="/missions/:id" element={<PrivateRoute><MissionView /></PrivateRoute>} />
-              <Route path="/users" element={<PrivateRoute>{userRole === 'administrateur' ? <UserManagement /> : <Navigate to="/" />}</PrivateRoute>} />
+              <Route path="/users" element={<PrivateRoute>{userRole === 'super_admin' ? <UserManagement /> : <Navigate to="/" />}</PrivateRoute>} />
               <Route path="/messages" element={<PrivateRoute><MessagesPage /></PrivateRoute>} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
@@ -374,5 +398,3 @@ const App = () => {
 };
 
 export default App;
-
-

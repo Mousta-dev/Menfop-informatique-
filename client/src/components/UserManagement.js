@@ -287,8 +287,8 @@ const UserManagement = () => {
                     <td className="py-3 px-4 text-muted small fw-medium">{user.email || '-'}</td>
                     <td className="py-3 px-4 text-muted small fw-medium">{user.phone || '-'}</td>
                     <td className="py-3 px-4">
-                      <span className={`badge ${user.role === 'administrateur' ? 'bg-danger' : 'bg-primary'}`}>
-                        {user.role}
+                      <span className={`badge ${['administrateur', 'super_admin'].includes(user.role) ? 'bg-danger' : 'bg-primary'}`}>
+                        {user.role === 'super_admin' ? 'Super-administrateur' : user.role === 'administrateur' ? 'Administrateur' : 'Utilisateur'}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-end no-print">
