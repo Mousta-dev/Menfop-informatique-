@@ -125,6 +125,7 @@ const Home = () => {
   };
 
   return (
+    <>
     <Container fluid className="py-4">
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
@@ -337,7 +338,8 @@ const Home = () => {
         </Card.Body>
       </Card>
     </Container>
-  );
+
+  </>);
 };
 
 export default Home;

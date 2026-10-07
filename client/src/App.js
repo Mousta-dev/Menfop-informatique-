@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, NavLink, Link, Navigate, useLocation } from 'react-router-dom';
 import { Container, Button, Offcanvas, ButtonGroup } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
@@ -18,7 +18,9 @@ import MissionView from './components/MissionView';
 import UserManagement from './components/UserManagement';
 import Login from './components/Login';
 import Register from './components/Register';
+import MessagesPage from './components/MessagesPage';
 import './App.css';
+import axios from 'axios';
 
 const AppContent = () => {
   const { t, i18n } = useTranslation();
@@ -30,11 +32,26 @@ const AppContent = () => {
 
   useEffect(() => {
     const token = sessionStorage.getItem('token');
-    const role = sessionStorage.getItem('role');
-    if (token) {
-      setIsAuthenticated(true);
-      setUserRole(role);
-    }
+    if (!token) return;
+    axios.get('/api/me', { headers: { Authorization: `Bearer ${token}` } })
+      .then((response) => {
+        const user = response.data?.data;
+        if (!user) return;
+        sessionStorage.setItem('username', user.username);
+        sessionStorage.setItem('role', user.role);
+        setUserRole(user.role);
+      })
+      .catch((error) => {
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('role');
+          sessionStorage.removeItem('username');
+          setIsAuthenticated(false);
+          setUserRole(null);
+        } else {
+          console.error('Unable to refresh current user permissions:', error);
+        }
+      });
   }, []);
 
   useEffect(() => {
@@ -98,6 +115,25 @@ const AppContent = () => {
 
   const SidebarContent = () => {
     const username = sessionStorage.getItem('username');
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    useEffect(() => {
+      const fetchUnread = async () => {
+        const token = sessionStorage.getItem('token');
+        if (!token) return;
+        try {
+          const res = await axios.get('/api/notifications', { headers: { Authorization: 'Bearer ' + token } });
+          if (res.data && res.data.data) {
+            const unread = res.data.data.filter(n => !n.read).length;
+            setUnreadCount(unread);
+          }
+        } catch (e) { /* ignore */ }
+      };
+      fetchUnread();
+      const intervalId = window.setInterval(fetchUnread, 4000);
+      return () => window.clearInterval(intervalId);
+    }, []);
+
     return (
       <>
         <div className="sidebar-header">
@@ -115,7 +151,9 @@ const AppContent = () => {
               </div>
               <div className="user-info">
                 <span className="user-name text-truncate" title={username}>{username}</span>
-                <span className="user-role-label">{userRole}</span>
+                <span className="user-role-label">
+                  {userRole === 'super_admin' ? 'Super-administrateur' : userRole === 'administrateur' ? 'Administrateur' : userRole}
+                </span>
               </div>
             </div>
           )}
@@ -136,6 +174,7 @@ const AppContent = () => {
             </svg>
             {t('sidebar.dashboard')}
           </NavLink>
+
           <NavLink to="/establishments" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''}`} onClick={() => setShowMobileMenu(false)}>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-building me-2" viewBox="0 0 16 16">
               <path d="M4 2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zM4 5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zM4 8.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zM4 11.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/>
@@ -208,10 +247,10 @@ const AppContent = () => {
             {t('sidebar.view_reports')}
           </NavLink>
 
-          {userRole === 'administrateur' && (
+          {userRole === 'super_admin' && (
             <>
               <div className="sidebar-section-label px-3 pt-3 pb-1 text-uppercase small fw-bold text-danger" style={{ fontSize: '0.7rem', letterSpacing: '0.05em' }}>
-                Admin
+                Super administration
               </div>
               <NavLink to="/users" className={({ isActive }) => `sidebar-nav-link ${isActive ? 'active' : ''} text-danger`} onClick={() => setShowMobileMenu(false)}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-people-fill me-2" viewBox="0 0 16 16">
@@ -224,6 +263,17 @@ const AppContent = () => {
         </div>
         
         <div className="sidebar-footer">
+          <div style={{ marginBottom: '10px' }}>
+            <Button as={Link} to="/messages" variant={location.pathname === '/messages' ? 'primary' : 'outline-primary'} className="w-100 rounded-pill btn-sm mb-2 sidebar-messages-link" onClick={() => setShowMobileMenu(false)}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" className="bi bi-chat-dots me-2" viewBox="0 0 16 16">
+                <path d="M2 1a1 1 0 0 0-1 1v8.5A1.5 1.5 0 0 0 2.5 12H4v1.5a.5.5 0 0 0 .854.354L7.707 10H13a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/>
+                <path d="M3 5.5a.5.5 0 1 1 1 0 .5.5 0 0 1-1 0zm2 0a.5.5 0 1 1 1 0 .5.5 0 0 1-1 0zm2 0a.5.5 0 1 1 1 0 .5.5 0 0 1-1 0z"/>
+              </svg>
+              Messagerie
+              {unreadCount > 0 && <span className="sidebar-unread-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}
+            </Button>
+          </div>
+
           <Button variant="outline-danger" className="w-100 rounded-pill btn-sm" onClick={handleLogout}>
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" className="bi bi-box-arrow-right me-2" viewBox="0 0 16 16">
               <path fillRule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z"/>
@@ -327,7 +377,8 @@ const AppContent = () => {
               <Route path="/new-mission" element={<PrivateRoute><MissionForm /></PrivateRoute>} />
               <Route path="/missions" element={<PrivateRoute><MissionsList /></PrivateRoute>} />
               <Route path="/missions/:id" element={<PrivateRoute><MissionView /></PrivateRoute>} />
-              <Route path="/users" element={<PrivateRoute>{userRole === 'administrateur' ? <UserManagement /> : <Navigate to="/" />}</PrivateRoute>} />
+              <Route path="/users" element={<PrivateRoute>{userRole === 'super_admin' ? <UserManagement /> : <Navigate to="/" />}</PrivateRoute>} />
+              <Route path="/messages" element={<PrivateRoute><MessagesPage /></PrivateRoute>} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </Container>
